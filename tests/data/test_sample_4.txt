@@ -1,0 +1,8 @@
+Introduction
+Materials and methods
+Bacterial 16s RNA sequencing and analysis
+16s rDNA were sequenced and mapped according to taxonomy.
+uBiome kit and 16s rDNA were amplified 
+SRA accession: SRP148650.
+Statistical methods
+Results

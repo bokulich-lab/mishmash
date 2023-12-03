@@ -1,0 +1,11 @@
+Introduction
+Methods
+16S rRNA-Seq.
+V4 region of the 16S rRNA genes via PCR primers: F319 (5′-ACTCCTACGGGAGGCAGCAGT-3′) and R806 (5′-GGACTACNVGGGTWTCTAAT-3′).
+at the National Center for Biotechnology Information (NCBI, PRJNA632048)
+Quantitative PCR
+qPCR analysis
+RNA-Seq
+Sample preparation and sequencing.
+accession no. GSE212589
+Statistics
