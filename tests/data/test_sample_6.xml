@@ -1,0 +1,16 @@
+<eSearchResult>
+<Count>10</Count>
+<RetMax>20</RetMax>
+<RetStart>0</RetStart>
+<TranslationSet/>
+<TranslationStack>
+<TermSet>
+<Term>XXXX[All Fields]</Term>
+<Field>All Fields</Field>
+<Count>10</Count>
+<Explode>N</Explode>
+</TermSet>
+<OP>GROUP</OP>
+</TranslationStack>
+<QueryTranslation>XXXX[All Fields]</QueryTranslation>
+</eSearchResult>

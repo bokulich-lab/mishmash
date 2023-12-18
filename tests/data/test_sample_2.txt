@@ -1,13 +1,13 @@
-Introduction
-Materials and Methods
-Extraction of Genomic DNA and Quantitative PCR
+Introduction.
+Materials and Methods.
+Extraction of Genomic DNA and Quantitative PCR.
 bacterial 16S rRNA gene sequence,bacteria 16S rRNA gene copy numbers. 
-PCR-DGGE Analysis
-RNA Preparation and Quantitative Reverse Transcriptase PC
-Statistical Analyses
-Results
-Discussion and Conclusions
-Acknowledgments
-PCR-primers.
-Conflicts of Interest
+PCR-DGGE Analysis.
+RNA Preparation and Quantitative Reverse Transcriptase PC.
+Statistical Analyses.
+Results.
+Discussion and Conclusions.
+Acknowledgments.
+PCR-primers..
+Conflicts of Interest.
 The authors declare no conflict of interest.

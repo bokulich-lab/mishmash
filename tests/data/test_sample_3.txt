@@ -1,13 +1,13 @@
-Introduction
-we applied 16S rRNA sequencing 
-Results
-Discussion
-Materials and Methods
-16S rRNA Gene Sequencing
-The V4 region of the 16S rRNA gene was amplified by the universal primers 515F (5′-GTGCCAGCMGCCGCGGTAA) and 806R (5′-GGACTACHVGGGTWTCTAAT). 
-Metabolomics Analysis
-Statistical Analysis
-Acknowledgments
-Supplementary Materials 
-Author Contribution
-Conflicts of Interest
+Introduction.
+we applied 16S rRNA sequencing.
+Results.
+Discussion.
+Materials and Methods.
+16S rRNA Gene Sequencing.
+The V4 region of the 16S rRNA gene was amplified by the universal primers 515F (5′-GTGCCAGCMGCCGCGGTAA) and 806R (5′-GGACTACHVGGGTWTCTAAT).
+Metabolomics Analysis.
+Statistical Analysis.
+Acknowledgments.
+Supplementary Materials .
+Author Contribution.
+Conflicts of Interest.

@@ -18,6 +18,8 @@ lxml = "^4.9.3"
 responses = "^0.24.1"
 parametrized = "^66.0.2"
 parameterized = "^0.9.0"
+entrezpy = "^2.1.3"
+pandas = "^2.1.4"
 
 [tool.poetry.scripts]
 scrape = "ord_mishmash.cli:main"
