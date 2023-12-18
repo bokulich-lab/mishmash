@@ -7,11 +7,10 @@ Users can easily assess the openness of publication data and obtain said data fo
 ## Installation
 Use the package manager pip to install ord-mishmash, including all dependencies.
 ```bash
-pip install git+
+pip install git+https://github.com/bokulich-lab/ord-mishmash.git
 ```
 ## Usage
-ord-mishmash provides a couple of 2 main commands to scrape a content of PMC publications  and fetching the related metadata from SRA. 
-
+Ord-mishmash provides a couple of 2 main commands to scrape the content of PMC publications  and fetch the related metadata from SRA. 
 ```shell
 scrape get_metadata \
               --email  \
@@ -23,15 +22,7 @@ scrape get_metadata \
 scrape pdf_analysis \
               --pubmed_central_ids  \
               --output_file \
-             
 ```
-where:
-- ` --email` is the user email address,
-- `--accession_ids` stands for list of acccession ids to be  scraped,
-- `--pmc_ids` stands for list of pubmed cetral ids of the publications to be scraped,
-- `--output_file` stands for the output file name.
-
-
 ## Contributions
 ### Pull requests
 To set up a development environment, use [Poetry](https://python-poetry.org/).
@@ -46,4 +37,4 @@ poetry run pytest
 
 
 ## License
-ord-mishmash is released under a BSD-3-Clause license. See LICENSE for more details.
+Ord-mishmash is released under a BSD-3-Clause license. See LICENSE for more details.

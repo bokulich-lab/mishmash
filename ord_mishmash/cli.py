@@ -14,9 +14,9 @@ def main():
     )
     parser.add_argument('command', choices=['get_metadata','pdf_analysis'])
     parser.add_argument("-e","--email",help = 'user email')
-    parser.add_argument("-ai",'--ascession_ids', nargs='+',dest = 'ids' )
+    parser.add_argument("-i",'--ascession_ids', nargs='+',dest = 'ids' )
     parser.add_argument('-pmc_ids','--pubmed_central_ids', nargs='+', dest = 'pmc_ids')
-    parser.add_argument('-f','--output_file', dest  = 'output')
+    parser.add_argument('-o','--output_file', dest  = 'output')
 
 
     

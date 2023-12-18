@@ -5,11 +5,14 @@ import re
 import os
 import requests
 import xmltodict
+import pandas as pd 
 from nltk import sent_tokenize, word_tokenize
 from collections import Counter
 from pdfminer.high_level import extract_pages, extract_text
 from pdfminer.layout import  LTTextContainer, LTChar, LTRect, LTFigure
-
+from xml.etree import ElementTree as ET
+import urllib.request
+from bs4 import BeautifulSoup, Comment
 
 
 project_studies_pattern1 = r'(PRJ(E|D|N)[A-Z][0-9]+)'
@@ -23,8 +26,6 @@ ref = r'(References)'
 
 primer_metod = r'(16(S|s))'
 metagenomic = r'((M|m)etagenomic)'
-
-
 patterns = [ project_studies_pattern1,
             project_studies_pattern2,
             biosample_studies_pattern1,
@@ -33,92 +34,175 @@ patterns = [ project_studies_pattern1,
             runs_pattern,
             analysis_patern]
 
-class PdfScraper:
-    def __init__(self,filename):
-        self.filename = filename
-        self.reader = PyPDF2.PdfReader(filename)
+def _contains_blocking_comment(content) -> bool:
+    for element in content(string=lambda text: isinstance(text, Comment)):
+        if str(element).strip() =='The publisher of this article does not allow downloading of the full text in XML form.':
+                return True
+    return False
+
+class PMCscraper:
+    def __init__(self,pmc_id):
+        ''' Class to scrape a pmc_record.
+        
+        Inputs
+        ------
+        pmc_id = int
+                PMC record id.
+
+        '''    
+        self.pmc_id = pmc_id
+        self.content = None
+        self.core_text = None
         self.accession_tuples = None
-        self.output_string = None
         self.accession_numbers = None
         self.database_names = None
         self.sra_records_count = None
+        self.metod_count = None
+        self.pcr_primers = None
+        self.accession_string = False
+        self.sra_records_xmls = None
     
-    def get_pages(self) -> str:
-        output_string = ''
-        count = len(self.reader.pages)
-        for i in range(count):
-            pageObj =  self.reader.pages[i]
-            output_string += pageObj.extract_text()
-            self.output_string = output_string
-        #print(self.output_string)
-        return self.output_string
-    def text_extraction(self,element):
-        line_text = element.get_text()
-    def _is_reference(self,paragraph) -> bool:
-        return paragraph.get_text().lstrip().split(' ')[0].lower().rstrip() == 'references'
+    def get_xml(self) -> object:
+        ''' Get the xml record of the text of the paper.
 
-    def get_pages2(self) -> str:
-        page_str = []
-        referenceFound = False
-        for  page in extract_pages(self.filename):
-            if not referenceFound:
-                for paragraph in page:
-                    if isinstance(paragraph,LTTextContainer):
-                        if self._is_reference(paragraph):
-                            referenceFound = True
-                            break
-                        else:
-                            page_str.append(paragraph.get_text())
-                    else:
-                        continue
-        return page_str
- 
+        Returns
+        -------
+        self.content : xml
+        '''
+        if self.content is not None:
+            return self.content
 
+        url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id={}'.format(self.pmc_id)
+        try:
+            r = requests.get(url, 3)
+            r.raise_for_status()
+        except requests.exceptions.Timeout:
+            sys.exit(f"Connection to {url} has timed out. Please retry.")
+        except requests.exceptions.HTTPError:
+            print( f"The download URL:  {url}  is likely invalid.\n",
+                  flush=True,
+                 )
+            return 0
+        except KeyError:
+            print("Key error for: " + url, flush=True)
+            return 0         
+        self.content = BeautifulSoup(r.content,features = "xml" )
+        return self.content
+
+    def contains_blocking_comment(self):
+        return _contains_blocking_comment(self.get_xml())
+    
+      
+    def get_text(self):
+        ''' Get the plain text of the record.
+
+        Returns
+        -------
+        self.core_text : str
+                        Text of the paper.
+        '''
+        if self.core_text is not None:
+            return self.core_text
+
+        content = self.get_xml()
+        if _contains_blocking_comment(content):
+            raise RuntimeError('The publisher of this article does not allow '
+                               + 'downloading of the full text in XML form, please reevaluate manually!')
+            
+        core_text_body = content.find("body")
+
+        core_text_back = content.find("back")
+        if core_text_back:
+            ref_list = core_text_back.find('ref-list')
+            for codetag in ref_list.find_all_next():
+                            codetag.clear() 
+            self.core_text = core_text_body.text + core_text_back.text
+        else:
+             self.core_text = core_text_body.text
+        return self.core_text
+    
     def get_accession_tuples(self) -> list:
-        if self.output_string is None:
-            self.get_pages()
+        '''Get the accession tuples from the record.
+
+        Returns
+        -------
+        self.accession_tuples : list 
+                            List of tuples - accession numbers, database name.
+        '''
+        if self.accession_tuples is not None:
+            return self.accession_tuples
+
+        core_text = self.get_text()
         res = []
         for pattern in patterns:
-            if re.findall(pattern,self.output_string):
-                res += re.findall(pattern,self.output_string)
+            matches = re.findall(pattern, core_text)
+            if matches:
+                res+=matches
             self.accession_tuples = res
-        return self.accession_tuples
+        return self.accession_tuples 
+
+    def get_accession_numbers(self) -> set:
+        '''Get the accession numbers from the record.
+
+        Returns
+        -------
+        self.accession_numbers : set
+                          Set of accesion numbers of the paper.
+        '''
+        return set(t[0] for t in self.get_accession_tuples())
     
-    def get_accession_numbers(self) ->list:
-        if self.accession_tuples is None:
-            self.get_accession_tuples()
-        if len(self.accession_tuples) >0: 
-            self.accession_numbers = [t[0] for t in self.accession_tuples]
-        return self.accession_numbers
-    
+    def get_accession_number_string(self) -> bool:
+        '''Get the string: accession
+        
+        Returns
+        -------
+        self.accession_string : bool
+                        True if there is a match, False otherwise.
+        '''      
+        return re.search(r'\baccession\b',self.get_text()) is not None
+
+
     def get_database_names(self) ->list:
-        if self.accession_tuples is None:
-            self.get_accession_tuples()
-        if len(self.accession_tuples) >0: 
-            self.database_names = [t[1] for t in self.accession_tuples]
-        return self.database_names
+        ''' Get the database name character.
+
+        Returns
+        -------
+        self.database_names : list
+                    List of characters indicating the database name.
+       
+        '''          
+        return set(t[1] for t in self.get_accession_tuples())
     
     def get_number_of_records_sra(self) -> int:
-        if self.accession_tuples is None:
-            self.get_accession_tuples()
+        ''' Get total count of records corresponding to all
+            the accesion_numbers from the paper.
 
-        if len(self.get_accession_tuples()) <1:
-            self.sra_records_count = 0
-            return  self.sra_records_count
+        Returns
+        -------
+        self.sra_records_count : int
+        ''' 
+        if self.sra_records_count is not None:
+            return self.sra_records_count
+
+        if self.accession_numbers is None:
+        if len(self.get_accession_numbers()) <1:
+            return 0
         else:
-            res_xmls = []
-            for n in self.accession_numbers:
-                url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&term={}'.format(n)
-                res = requests.get(url)
-                res.raise_for_status()
-                res_xmls.append(xmltodict.parse(res.content))
+            if self.sra_record_xmls is None:
+                res_xmls = []
+                for n in self.get_accession_numbers():
+                    url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&term={}'.format(n)
+                    res = requests.get(url)
+                    res.raise_for_status()
+                    res_xmls.append(xmltodict.parse(res.content))
+                self.sra_record_xmls = res_xmls
             total_count = 0
-            for record in res_xmls:
+            for record in self.sra_record_xmls:
                 total_count += int(record['eSearchResult']['Count'])
-                self.sra_records_count = total_count
-            return  self.sra_records_count
-
-    def categorize_metods(self,words):
+            self.sra_records_count = total_count
+            return self.sra_records_count   
+    
+    def _categorize_metods(self,words):
         primer_methods = {'primer','pcr','16s','16 s'}
         metagenomic = {'metagenomic','metagenomics'}
         pmwlen = len(primer_methods.intersection(words))
@@ -133,58 +217,91 @@ class PdfScraper:
         else:
             return 'unknown'
     
-    def count_metods(self,sentences):
+    def _count_metods(self,sentences):
         sents = Counter()
         for sentence in sentences:
-            metod = self.categorize_metods(sentence)
+            metod = self._categorize_metods(sentence)
             sents[metod] +=1
         return sents
 
+    def parse_method(self) -> dict:
+        '''Get the size of each group metod (prime_metod,metagenomics,both,unknowm).
 
+        Returns 
+        -------
+        self.metod_count : dict    
 
- 
-
-
-    def parse_metod(self) -> str:
-        if self.output_string is None:
-            self.get_pages()
+        '''  
         sentences = [[word.lower() for word in word_tokenize(sentence)]
-                     for sentence in sent_tokenize(self.output_string)]
-        sents = self.count_metods(sentences)
-        print(sents)
-        return sents
+                     for sentence in sent_tokenize(self.get_text())]
+        return dict(self._count_metods(sentences))
         
+    def get_pcr_primer(self) -> list:
+        '''Get pcr primers.
 
+        Returns
+        -------
+        self.pcr_primers : list
+        '''            
+        pcr_pattern = r'((?:A|G|C|T|N|W|V|M|H){9}(?:A|G|C|T|N|W|V|M|H)+)'
+        res = []
+        if re.findall(pcr_pattern, str(self.get_text() )):
+                res+=re.findall(pcr_pattern,self.get_text())
+        return res
 
-        
-      
+def  pdf_analysis(pmc_ids) -> dict :
+    '''
+    Gives overview of the paper with respect to the predifined metrics.
 
-
-
-def scrape_pdf(basepath):
-     with open("result.txt","w") as file:
-        for entry in os.listdir(basepath):
-            filename = os.path.join(basepath,entry)
-            print(filename)
-            c = PdfScraper(filename)
-            r = c.get_pages2()
-            t = c.parse_metod()
-            an = c.get_accession_numbers()
-            dn = c.get_database_names()
-            file.write('{}   accession number : {}   database : {}\n'.format(filename, an,dn))
- 
-
-
-               
+    Args
+    ----
+    id : list
+         list of string ids representation of PMC publications
     
-def scrape_pdf2():
-    print('------------------------------')
-    c = PdfScraper('/Users/zsebechle/git/ord_mishmash/ord_mishmash/ord_mishmash/data2/paper7.pdf')
-    r = c.get_pages2()
-    print(r)
-   
-
-if __name__ == "__main__":
-  scrape_pdf('/Users/zsebechle/git/ord_mishmash/ord_mishmash/ord_mishmash/data2/')
+    Returns
+    -------
+    df : dataframe
+         Dataframe of with the summary of PMC objects
+    '''
+    requested_objects = [PMCscraper(id) for id in pmc_ids]
+    scrape_objects = [x for x in filter(lambda el: not el.contains_blocking_comment(), requested_objects)]
+    forbidden_objects = [x for x in filter(lambda el: el.contains_blocking_comment(), requested_objects)]
+    if len(forbidden_objects) > 0:
+        print('Papers represented by followin PMC ids was not fetched, the publisher'
+                   +' of this article does not allow '
+                   + 'downloading of the full text in XML form:' )
+        for el in forbidden_objects:
+            print(el.pmc_id) 
+    df = pd.DataFrame({'id':[],
+                           'accession_numbers':[],
+                           'database_name':[],
+                           'accession_string':[],
+                           'sra_records':[],
+                           'pcr_primer':[],
+                           'method':[]
+                           })
+    for el in scrape_objects:
+            tmp_df=pd.DataFrame({
+                        'id':[el.pmc_id],
+                        'accession_numbers':[el.get_accession_numbers()],
+                        'database_name': [el.get_database_names()],
+                        'accession_string': [el.get_accession_number_string()],
+                        'sra_records': [el.get_number_of_records_sra()],
+                        'pcr_primer': [el.get_pcr_primer()],
+                        'method': [el.parse_method()]
+                        })
+            df = pd.concat([df,tmp_df])
+             
+    return df.reset_index(drop=True)
             
+
+          
+
+
+          
+          
+     
+     
+
  
+
