@@ -188,7 +188,7 @@ class PMCscraper:
         if len(self.get_accession_numbers()) <1:
             return 0
         else:
-            if self.sra_record_xmls is None:
+            if self.sra_records_xmls is None:
                 res_xmls = []
                 for n in self.get_accession_numbers():
                     url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&term={}'.format(n)
