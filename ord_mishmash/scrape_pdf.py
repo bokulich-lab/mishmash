@@ -184,7 +184,7 @@ class PMCscraper:
         if self.sra_records_count is not None:
             return self.sra_records_count
 
-        if self.accession_numbers is None:
+             
         if len(self.get_accession_numbers()) <1:
             return 0
         else:

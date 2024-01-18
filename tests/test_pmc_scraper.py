@@ -107,9 +107,6 @@ class TestPMCScraper(unittest.TestCase):
             with open(el,'r', encoding='utf-8') as f:
                 tmp_file = f.read()
                 xml_files.append(xmltodict.parse(tmp_file))
-
-
-        
          a.sra_record_xmls = xml_files
          res = a.get_number_of_records_sra()
          self.assertEqual(res,expected_res)   

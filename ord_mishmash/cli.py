@@ -4,7 +4,7 @@ The command-line interface for the PyScraper
 
 import argparse
 from .metadatafetcher import get_metadata
-from .scrape_pdf2 import pdf_analysis
+from .scrape_pdf import pdf_analysis
 
 
 
