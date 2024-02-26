@@ -1,17 +1,13 @@
 import sys
-import PyPDF2 
 from pathlib import Path 
 import re
-import os
 import requests
 import xmltodict
 import pandas as pd 
 from nltk import sent_tokenize, word_tokenize
 from collections import Counter
 from pdfminer.high_level import extract_pages, extract_text
-from pdfminer.layout import  LTTextContainer, LTChar, LTRect, LTFigure
 from xml.etree import ElementTree as ET
-import urllib.request
 from bs4 import BeautifulSoup, Comment
 
 
@@ -60,7 +56,7 @@ class PMCscraper:
         self.metod_count = None
         self.pcr_primers = None
         self.accession_string = False
-        self.sra_records_xmls = None
+        self.sra_record_xmls = None
     
     def get_xml(self) -> object:
         ''' Get the xml record of the text of the paper.
@@ -188,7 +184,7 @@ class PMCscraper:
         if len(self.get_accession_numbers()) <1:
             return 0
         else:
-            if self.sra_records_xmls is None:
+            if self.sra_record_xmls is None:
                 res_xmls = []
                 for n in self.get_accession_numbers():
                     url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&term={}'.format(n)
