@@ -5,10 +5,18 @@ The command-line interface for the PyScraper
 import argparse
 from .metadatafetcher import get_metadata
 from .scrape_pdf import pdf_analysis
+import nltk
 
+def installNltkPunktDataSet():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
 
 
 def main():
+    installNltkPunktDataSet()
+
     parser = argparse.ArgumentParser(
         description="Python package to evaluate biomedical scietific study papers"
     )
