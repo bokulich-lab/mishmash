@@ -18,7 +18,6 @@ biosample_studies_pattern2 =  r'((E|D|S)RS[0-9]{6,})'
 experiments_pattern =  r'((E|D|S)RX[0-9]{6,})'
 runs_pattern =  r'((E|D|S)RR[0-9]{6,})'
 analysis_patern =  r'((E|D|S)RZ[0-9]{6,})'
-ref = r'(References)'
 
 primer_metod = r'(16(S|s))'
 metagenomic = r'((M|m)etagenomic)'
@@ -50,12 +49,7 @@ class PMCscraper:
         self.content = None
         self.core_text = None
         self.accession_tuples = None
-        self.accession_numbers = None
-        self.database_names = None
         self.sra_records_count = None
-        self.metod_count = None
-        self.pcr_primers = None
-        self.accession_string = False
         self.sra_record_xmls = None
     
     def get_xml(self) -> object:
@@ -142,8 +136,8 @@ class PMCscraper:
 
         Returns
         -------
-        self.accession_numbers : set
-                          Set of accesion numbers of the paper.
+        
+        Set of accesion numbers of the paper.
         '''
         return set(t[0] for t in self.get_accession_tuples())
     
@@ -152,8 +146,8 @@ class PMCscraper:
         
         Returns
         -------
-        self.accession_string : bool
-                        True if there is a match, False otherwise.
+        
+        True if there is a match, False otherwise.
         '''      
         return re.search(r'\baccession\b',self.get_text()) is not None
 
@@ -163,11 +157,18 @@ class PMCscraper:
 
         Returns
         -------
-        self.database_names : list
-                    List of characters indicating the database name.
-       
+        
+        List of characters indicating the database name.
         '''          
-        return set(t[1] for t in self.get_accession_tuples())
+        char_to_value = {
+             'E' : 'ENA',
+             'D' : 'DDBJ',
+             'S' : 'NCBI',
+             'N' : 'NCBI'
+             
+        }
+        database_shortcuts = set(t[1] for t in self.get_accession_tuples())
+        return set(char_to_value[x] for x in database_shortcuts)
     
     def get_number_of_records_sra(self) -> int:
         ''' Get total count of records corresponding to all
@@ -225,7 +226,7 @@ class PMCscraper:
 
         Returns 
         -------
-        self.metod_count : dict    
+        Dictionary providing total counts for each group category.
 
         '''  
         sentences = [[word.lower() for word in word_tokenize(sentence)]
@@ -237,7 +238,7 @@ class PMCscraper:
 
         Returns
         -------
-        self.pcr_primers : list
+        List of PCR primers. 
         '''            
         pcr_pattern = r'((?:A|G|C|T|N|W|V|M|H){9}(?:A|G|C|T|N|W|V|M|H)+)'
         res = []

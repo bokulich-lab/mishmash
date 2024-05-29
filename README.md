@@ -18,11 +18,19 @@ scrape get_metadata \
               --output_file \
              
 ```
+where:
+- `email` is your email address (required by NCBI).
+- `--accession_ids` is space-separated list of accession IDs to retrieve metadata for.
+- `--output_file` specifies the output file to write the retrieved metadata to.
 ```shell
 scrape pdf_analysis \
               --pubmed_central_ids  \
               --output_file \
 ```
+where:
+- `--pubmed_central_ids` is space-separated list of PubMed Central IDs to perform the pdf analysis on.
+- `--output_file` specifies the output file to write the analysis to.
+
 ## Contributions
 ### Pull requests
 To set up a development environment, use [Poetry](https://python-poetry.org/).

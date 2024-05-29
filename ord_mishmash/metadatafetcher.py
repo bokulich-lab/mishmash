@@ -3,7 +3,7 @@ from .entrezpy_clients._efetch import EFetchAnalyzer
 import entrezpy.efetch.efetcher as ef
 import argparse
 
-log_level = 'DEBUG'
+log_level = 'ERROR'
 nr_jobs = 1
 test_ids = ['ERROR']
 
