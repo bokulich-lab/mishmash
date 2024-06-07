@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "ord_mishmash"
+version = "0.1.0"
+description = ""
+authors = ["Zuzana Sebechlebska <zuzanasebechlebska@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+pdfmerge = "^1.0.0"
+requests = "^2.31.0"
+xmltodict = "^0.13.0"
+nltk = "^3.8.1"
+pdfminer-six = "^20221105"
+bs4 = "^0.0.1"
+lxml = "^4.9.3"
+responses = "^0.24.1"
+parameterized = "^0.9.0"
+entrezpy = "^2.1.3"
+pandas = "^2.1.4"
+
+[tool.poetry.scripts]
+scrape = "ord_mishmash.cli:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
