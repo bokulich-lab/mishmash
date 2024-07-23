@@ -3,10 +3,11 @@ The command-line interface for the Python scraper
 """
 
 import argparse
-from .metadatafetcher import get_metadata
-from .scrape_pdf import pdf_analysis
 import nltk
 import os
+
+from .fetch_metadata import get_metadata
+from .scrape_pdf import analyze_pdf
 
 
 def install_nltk_punkt_dataset():
@@ -24,7 +25,7 @@ def main():
     )
     parser.add_argument(
         "command",
-        choices=["get_metadata", "pdf_analysis"])
+        choices=["get_metadata", "analyze_pdf"])
     parser.add_argument(
         "-e",
         "--email",
@@ -69,7 +70,7 @@ def main():
     else:
         if not all([args.pmc_ids, args.output]):
             parser.error("all parameters -pmc_ids, -o are required")
-        df_analysis = pdf_analysis(args.pmc_ids)
+        df_analysis = analyze_pdf(args.pmc_ids)
         print("Result successfully obtained!")
         if os.path.exists(args.output):
             response = input(

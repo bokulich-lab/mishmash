@@ -1,11 +1,10 @@
 import os
 import unittest
-from parameterized import parameterized
-from pathlib import Path
-from mishmash import PMCscraper, pdf_analysis
-from bs4 import BeautifulSoup
-import pandas as pd
 import xmltodict
+
+from parameterized import parameterized
+from mishmash import PMCScraper, analyze_pdf
+from bs4 import BeautifulSoup
 
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +36,7 @@ class TestPMCScraper(unittest.TestCase):
         ]
     )
     def test_get_text(self, data, expected_value):
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         with open(data) as f:
             a.content = BeautifulSoup(f.read(), features="xml")
         res = a.get_text()
@@ -45,7 +44,7 @@ class TestPMCScraper(unittest.TestCase):
 
     def test_get_text_exception(self):
         xml_file_1 = fpath("data/test_sample_1.xml")
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         with open(xml_file_1) as f:
             a.content = BeautifulSoup(f.read(), features="xml")
         self.assertRaises(RuntimeError, a.get_text)
@@ -61,7 +60,7 @@ class TestPMCScraper(unittest.TestCase):
         ]
     )
     def test_accession_tuples(self, data, expected_res):
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         with open(data) as f:
 
             a.core_text = f.read()
@@ -70,7 +69,7 @@ class TestPMCScraper(unittest.TestCase):
 
     @parameterized.expand([(text_file_4), (text_file_5), (text_file_6), (text_file_7)])
     def test_accession_string(self, data):
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         with open(data) as f:
             a.core_text = f.read()
         res = a.get_accession_number_string()
@@ -93,7 +92,7 @@ class TestPMCScraper(unittest.TestCase):
         ]
     )
     def test_get_pcr_primer(self, data, expected_res):
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         with open(data) as f:
             a.core_text = f.read()
         res = a.get_pcr_primer()
@@ -101,13 +100,13 @@ class TestPMCScraper(unittest.TestCase):
 
     @parameterized.expand(
         [
-            (text_file_1, {"unknown": 13, "primer_metod": 1, "metagenomics": 1}),
-            (text_file_2, {"unknown": 11, "primer_metod": 2}),
-            (text_file_3, {"unknown": 10, "primer_metod": 3}),
+            (text_file_1, {"unknown": 13, "primer_method": 1, "metagenomics": 1}),
+            (text_file_2, {"unknown": 11, "primer_method": 2}),
+            (text_file_3, {"unknown": 10, "primer_method": 3}),
         ]
     )
     def test_parse_method(self, data, expected_res):
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         with open(data) as f:
             a.core_text = f.read()
         res = a.parse_method()
@@ -115,7 +114,7 @@ class TestPMCScraper(unittest.TestCase):
 
     @parameterized.expand([([xml_file_5], 163), ([xml_file_5, xml_file_6], 173)])
     def test_sra_count(self, data, expected_res):
-        a = PMCscraper("id")
+        a = PMCScraper("id")
         a.accession_tuples = [("XXXXX", "X")]
         xml_files = []
         for el in data:

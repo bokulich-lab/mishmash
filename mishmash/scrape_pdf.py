@@ -1,14 +1,12 @@
-import sys
-from pathlib import Path
 import re
 import requests
+import sys
 import xmltodict
 import pandas as pd
-from nltk import sent_tokenize, word_tokenize
-from collections import Counter
-from pdfminer.high_level import extract_pages, extract_text
-from xml.etree import ElementTree as ET
+
 from bs4 import BeautifulSoup, Comment
+from collections import Counter
+from nltk import sent_tokenize, word_tokenize
 
 
 project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]+)"
@@ -17,9 +15,9 @@ biosample_studies_pattern1 = r"(SAM(E|D|N)[A-Z]?[0-9])"
 biosample_studies_pattern2 = r"((E|D|S)RS[0-9]{6,})"
 experiments_pattern = r"((E|D|S)RX[0-9]{6,})"
 runs_pattern = r"((E|D|S)RR[0-9]{6,})"
-analysis_patern = r"((E|D|S)RZ[0-9]{6,})"
+analysis_pattern = r"((E|D|S)RZ[0-9]{6,})"
 
-primer_metod = r"(16(S|s))"
+primer_method = r"(16(S|s))"
 metagenomic = r"((M|m)etagenomic)"
 patterns = [
     project_studies_pattern1,
@@ -28,7 +26,7 @@ patterns = [
     biosample_studies_pattern2,
     experiments_pattern,
     runs_pattern,
-    analysis_patern,
+    analysis_pattern,
 ]
 
 
@@ -36,15 +34,17 @@ def _contains_blocking_comment(content) -> bool:
     for element in content(string=lambda text: isinstance(text, Comment)):
         if (
             str(element).strip()
-            == "The publisher of this article does not allow downloading of the full text in XML form."
+            == "The publisher of this article does not allow downloading "
+               "of the full text in XML form."
         ):
             return True
     return False
 
 
-class PMCscraper:
+class PMCScraper:
     def __init__(self, pmc_id):
-        """ Class to scrape a pmc_record.
+        """
+        Class to scrape a pmc_record.
         
         Inputs
         ------
@@ -60,7 +60,8 @@ class PMCscraper:
         self.sra_record_xmls = None
 
     def get_xml(self) -> object:
-        """ Get the xml record of the text of the paper.
+        """
+        Get the xml record of the text of the paper.
 
         Returns
         -------
@@ -203,14 +204,14 @@ class PMCscraper:
             self.sra_records_count = total_count
             return self.sra_records_count
 
-    def _categorize_metods(self, words):
+    def _categorize_methods(self, words):
         primer_methods = {"primer", "pcr", "16s", "16 s"}
         metagenomic = {"metagenomic", "metagenomics"}
         pmwlen = len(primer_methods.intersection(words))
         mwlen = len(metagenomic.intersection(words))
 
         if pmwlen > 0 and mwlen == 0:
-            return "primer_metod"
+            return "primer_method"
         elif pmwlen == 0 and mwlen > 0:
             return "metagenomics"
         elif pmwlen > 0 and mwlen > 0:
@@ -218,15 +219,17 @@ class PMCscraper:
         else:
             return "unknown"
 
-    def _count_metods(self, sentences):
+    def _count_methods(self, sentences):
         sents = Counter()
         for sentence in sentences:
-            metod = self._categorize_metods(sentence)
+            metod = self._categorize_methods(sentence)
             sents[metod] += 1
         return sents
 
     def parse_method(self) -> dict:
-        """Get the size of each group metod (prime_metod,metagenomics,both,unknowm).
+        """
+        Get the size of each group method (prime_method, metagenomics, both,
+        unknown).
 
         Returns 
         -------
@@ -237,7 +240,7 @@ class PMCscraper:
             [word.lower() for word in word_tokenize(sentence)]
             for sentence in sent_tokenize(self.get_text())
         ]
-        return dict(self._count_metods(sentences))
+        return dict(self._count_methods(sentences))
 
     def get_pcr_primer(self) -> list:
         """Get pcr primers.
@@ -253,9 +256,9 @@ class PMCscraper:
         return res
 
 
-def pdf_analysis(pmc_ids) -> dict:
+def analyze_pdf(pmc_ids) -> dict:
     """
-    Gives overview of the paper with respect to the predifined metrics.
+    Gives overview of the paper with respect to the predefined metrics.
 
     Args
     ----
@@ -267,7 +270,7 @@ def pdf_analysis(pmc_ids) -> dict:
     df : dataframe
          Dataframe of with the summary of PMC objects
     """
-    requested_objects = [PMCscraper(id) for id in pmc_ids]
+    requested_objects = [PMCScraper(id) for id in pmc_ids]
     scrape_objects = [
         x
         for x in filter(
@@ -279,8 +282,8 @@ def pdf_analysis(pmc_ids) -> dict:
     ]
     if len(forbidden_objects) > 0:
         print(
-            "Papers represented by followin PMC ids was not fetched, the publisher"
-            + " of this article does not allow "
+            "Papers represented by following PMC ids were not fetched, "
+            "the publisher of this article does not allow "
             + "downloading of the full text in XML form:"
         )
         for el in forbidden_objects:
