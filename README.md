@@ -6,7 +6,7 @@ MIShMASh (MIcrobiome Sequence and Metadata Availability Standards) is a Python 3
 Use the package manager `pip` to install mishmash, including all dependencies.
 
 ```bash
-pip install git+https://github.com/bokulich-lab/ord-mishmash.git
+pip install git+https://github.com/bokulich-lab/mishmash.git
 ```
 
 ## Usage
