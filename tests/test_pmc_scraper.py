@@ -2,7 +2,7 @@ import os
 import unittest
 from parameterized import parameterized
 from pathlib import Path
-from ord_mishmash import PMCscraper, pdf_analysis
+from mishmash import PMCscraper, pdf_analysis
 from bs4 import BeautifulSoup
 import pandas as pd
 import xmltodict

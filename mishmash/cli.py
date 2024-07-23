@@ -1,5 +1,5 @@
 """
-The command-line interface for the PyScraper
+The command-line interface for the Python scraper
 """
 
 import argparse
@@ -9,7 +9,7 @@ import nltk
 import os
 
 
-def installNltkPunktDataSet():
+def install_nltk_punkt_dataset():
     try:
         nltk.data.find("tokenizers/punkt")
     except LookupError:
@@ -17,14 +17,18 @@ def installNltkPunktDataSet():
 
 
 def main():
-    installNltkPunktDataSet()
+    install_nltk_punkt_dataset()
 
     parser = argparse.ArgumentParser(
-        description="Python package to evaluate biomedical scietific study papers"
+        description="Python package to evaluate scientific papers."
     )
-    parser.add_argument("command", choices=["get_metadata", "pdf_analysis"])
     parser.add_argument(
-        "-e", "--email", help="User email to use for metadata retrieval."
+        "command",
+        choices=["get_metadata", "pdf_analysis"])
+    parser.add_argument(
+        "-e",
+        "--email",
+        help="User email for use in metadata retrieval."
     )
     parser.add_argument(
         "-i",
@@ -38,9 +42,13 @@ def main():
         "--pubmed_central_ids",
         nargs="+",
         dest="pmc_ids",
-        help="Space-separated list of PubMed Central IDs to perform the pdf analysis on",
+        help="Space-separated list of PubMed Central IDs to scrape PDFs for.",
     )
-    parser.add_argument("-o", "--output_file", dest="output", help="Output file.")
+    parser.add_argument(
+        "-o",
+        "--output_file",
+        dest="output",
+        help="Output file name, needs file extension.")
 
     args = parser.parse_args()
     if args.command == "get_metadata":
@@ -50,7 +58,8 @@ def main():
         print("Result successfully obtained!")
         if os.path.exists(args.output):
             response = input(
-                f"The file '{args.output}' already exists. Do you want to overwrite it? (y/n): "
+                f"The file '{args.output}' already exists. "
+                f"Do you want to overwrite it? (y/n): "
             )
             if response.lower() != "y":
                 print("Operation aborted by the user.")
@@ -64,7 +73,8 @@ def main():
         print("Result successfully obtained!")
         if os.path.exists(args.output):
             response = input(
-                f"The file '{args.output}' already exists. Do you want to overwrite it? (y/n): "
+                f"The file '{args.output}' already exists. "
+                f"Do you want to overwrite it? (y/n): "
             )
             if response.lower() != "y":
                 print("Operation aborted by the user.")
