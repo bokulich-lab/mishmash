@@ -1,13 +1,10 @@
 import sys
-from pathlib import Path
 import re
 import requests
 import xmltodict
 import pandas as pd
 from nltk import sent_tokenize, word_tokenize
 from collections import Counter
-from pdfminer.high_level import extract_pages, extract_text
-from xml.etree import ElementTree as ET
 from bs4 import BeautifulSoup, Comment
 
 
@@ -253,7 +250,7 @@ class PMCscraper:
         return res
 
 
-def pdf_analysis(pmc_ids) -> dict:
+def pdf_analysis(args) -> dict:
     """
     Gives overview of the paper with respect to the predifined metrics.
 
@@ -267,6 +264,7 @@ def pdf_analysis(pmc_ids) -> dict:
     df : dataframe
          Dataframe of with the summary of PMC objects
     """
+    pmc_ids = args.pmc_list
     requested_objects = [PMCscraper(id) for id in pmc_ids]
     scrape_objects = [
         x

@@ -3,8 +3,8 @@ The command-line interface for the Python scraper
 """
 
 import argparse
-from .metadatafetcher import get_metadata
-from .scrape_pdf import pdf_analysis
+from metadatafetcher import get_metadata
+from scrape_pdf import pdf_analysis
 import nltk
 import os
 
