@@ -1,1 +1,1 @@
-from .scrape_pdf import PMCscraper, pdf_analysis
+from .scrape_pdf import PMCScraper, analyze_pdf

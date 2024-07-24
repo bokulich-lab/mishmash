@@ -9,7 +9,7 @@ test_ids = ["ERROR"]
 
 def get_metadata(args) -> object:
     """
-    Fetch the metadata of corresponding ids.
+    Fetch the metadata of corresponding IDs.
     
     Args
     ------
@@ -26,7 +26,8 @@ def get_metadata(args) -> object:
 
     run_ids = _get_run_ids(email, nr_jobs, accession_list, None, "", log_level)
     efetcher = ef.Efetcher(
-        "efetcher", email, apikey=None, apikey_var=None, threads=nr_jobs, qid=None
+        "efetcher", email, apikey=None,
+        apikey_var=None, threads=nr_jobs, qid=None
     )
 
     metadata_response = efetcher.inquire(
