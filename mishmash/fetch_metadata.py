@@ -13,8 +13,7 @@ def get_metadata(args) -> object:
     
     Args
     ------
-    email : str
-    accession_list : list of accession ids
+    args : pass
     
     Returns
     -------
