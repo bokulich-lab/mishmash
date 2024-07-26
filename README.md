@@ -20,7 +20,7 @@ scrape get_metadata \
 ```
 where:
 - `email` is your email address (required by NCBI).
-- `--accession_ids` is space-separated list of accession IDs to retrieve metadata for.
+- `--accession_ids` is a space-separated list of accession IDs to retrieve metadata for. These can be BioProject, BioSample, BioExperiment, or likewise accession IDs that are used within INSDC interfaces e.g. the BioProject ID **PRJNA607574** for the [collection of samples uploaded by the Memorial Sloan Kettering Cancer Center.](https://www.ncbi.nlm.nih.gov/bioproject/?term=(PRJNA607574)%20AND%20bioproject_sra[filter]%20NOT%20bioproject_gap[filter])
 - `--output_file` specifies the output file to write the retrieved metadata to.
 
 ```shell
@@ -29,7 +29,7 @@ scrape get_accessions \
   --output_file
 ```
 where:
-- `--pubmed_central_ids` is space-separated list of PubMed Central IDs to perform the pdf analysis on.
+- `--pmc_list` is space-separated list of PubMed Central IDs to search for associated INSDC accession IDs e.g. the PMC ID **PMC6240460** for [the 2017 article by Naymagon et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6240460/)
 - `--output_file` specifies the output file to write the analysis to.
 
 ## Contributions
