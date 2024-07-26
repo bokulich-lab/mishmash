@@ -15,7 +15,7 @@ MIShMASh provides two main commands to scrape the content of PMC publications an
 ```shell
 scrape get_metadata \
   --email  \
-  --accession_ids  \
+  --accession_list  \
   --output_file
 ```
 where:
@@ -24,8 +24,8 @@ where:
 - `--output_file` specifies the output file to write the retrieved metadata to.
 
 ```shell
-scrape analyze_pdf \
-  --pubmed_central_ids  \
+scrape get_accessions \
+  --pmc_list  \
   --output_file
 ```
 where:

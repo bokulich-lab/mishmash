@@ -1,5 +1,5 @@
-from entrezpy_clients._pipelines import _get_run_ids
-from entrezpy_clients._efetch import EFetchAnalyzer
+from .entrezpy_clients._pipelines import _get_run_ids
+from .entrezpy_clients._efetch import EFetchAnalyzer
 import entrezpy.efetch.efetcher as ef
 
 log_level = "ERROR"

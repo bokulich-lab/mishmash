@@ -256,22 +256,21 @@ class PMCScraper:
         return res
 
 
-def pdf_analysis(args) -> dict:
+def analyze_pdf(args) -> dict:
     """
     Gives overview of the paper with respect to the predefined metrics.
 
     Args
     ----
-    id : list
-         list of string ids representation of PMC publications
-    
+    args
+
     Returns
     -------
     df : dataframe
          Dataframe of with the summary of PMC objects
     """
     pmc_ids = args.pmc_list
-    requested_objects = [PMCscraper(id) for id in pmc_ids]
+    requested_objects = [PMCScraper(id) for id in pmc_ids]
     requested_objects = [PMCScraper(id) for id in pmc_ids]
     scrape_objects = [
         x

@@ -3,10 +3,11 @@ The command-line interface for the Python scraper
 """
 
 import argparse
-from fetch_metadata import get_metadata
-from scrape_pdf import pdf_analysis
 import nltk
 import os
+
+from .fetch_metadata import get_metadata
+from .scrape_pdf import analyze_pdf
 
 
 def install_nltk_punkt_dataset():
@@ -20,10 +21,6 @@ def main():
     install_nltk_punkt_dataset()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output_file",
-                        help="File name for output.",
-                        type=str,
-                        default="output.csv")
     subparsers = parser.add_subparsers(required=True)
 
     md_parser = subparsers.add_parser("get_metadata",
@@ -40,17 +37,25 @@ def main():
                            help="Space-separated list of INSDC accession IDs "
                                 "to retrieve metadata for.",
                            required=True)
+    md_parser.add_argument("--output_file",
+                           help="File name for output.",
+                           type=str,
+                           default="output.csv")
 
     accession_parser = subparsers.add_parser("get_accessions",
                                              help="From published literature, "
                                                   "retrieves accession IDs "
-                                                  "for INSDC databases.")
-    accession_parser.set_defaults(func=pdf_analysis)
+                                                  "for INSDC datcdabases.")
+    accession_parser.set_defaults(func=analyze_pdf)
     accession_parser.add_argument("--pmc_list",
                                   nargs="+",
                                   help="Space-separated list of PubMed Central "
                                        "IDs to evaluate for INSDC accessions.",
                                   required=True)
+    accession_parser.add_argument("--output_file",
+                                  help="File name for output.",
+                                  type=str,
+                                  default="output.csv")
 
     args = parser.parse_args()
     output_df = args.func(args)
