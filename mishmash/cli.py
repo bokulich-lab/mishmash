@@ -20,68 +20,57 @@ def install_nltk_punkt_dataset():
 def main():
     install_nltk_punkt_dataset()
 
-    parser = argparse.ArgumentParser(
-        description="Python package to evaluate scientific papers."
-    )
-    parser.add_argument(
-        "command",
-        choices=["get_metadata", "analyze_pdf"])
-    parser.add_argument(
-        "-e",
-        "--email",
-        help="User email for use in metadata retrieval."
-    )
-    parser.add_argument(
-        "-i",
-        "--accession_ids",
-        nargs="+",
-        dest="ids",
-        help="Space-separated list of accession IDs to retrieve metadata for.",
-    )
-    parser.add_argument(
-        "-pmc_ids",
-        "--pubmed_central_ids",
-        nargs="+",
-        dest="pmc_ids",
-        help="Space-separated list of PubMed Central IDs to scrape PDFs for.",
-    )
-    parser.add_argument(
-        "-o",
-        "--output_file",
-        dest="output",
-        help="Output file name, needs file extension.")
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(required=True)
+
+    md_parser = subparsers.add_parser("get_metadata",
+                                      help="Retrieves metadata from INSDC "
+                                           "database accession IDs.")
+    md_parser.set_defaults(func=get_metadata)
+    md_parser.add_argument("--email",
+                           help="User email address required for database "
+                                "access.",
+                           type=str,
+                           required=True)
+    md_parser.add_argument("--accession_list",
+                           nargs="+",
+                           help="Space-separated list of INSDC accession IDs "
+                                "to retrieve metadata for.",
+                           required=True)
+    md_parser.add_argument("--output_file",
+                           help="File name for output.",
+                           type=str,
+                           default="output.csv")
+
+    accession_parser = subparsers.add_parser("get_accessions",
+                                             help="From published literature, "
+                                                  "retrieves accession IDs "
+                                                  "for INSDC datcdabases.")
+    accession_parser.set_defaults(func=analyze_pdf)
+    accession_parser.add_argument("--pmc_list",
+                                  nargs="+",
+                                  help="Space-separated list of PubMed Central "
+                                       "IDs to evaluate for INSDC accessions.",
+                                  required=True)
+    accession_parser.add_argument("--output_file",
+                                  help="File name for output.",
+                                  type=str,
+                                  default="output.csv")
 
     args = parser.parse_args()
-    if args.command == "get_metadata":
-        if not all([args.email, args.ids, args.output]):
-            parser.error("all parameters -e, -i, -o are required")
-        metadata_df = get_metadata(args.email, args.ids)
-        print("Result successfully obtained!")
-        if os.path.exists(args.output):
-            response = input(
-                f"The file '{args.output}' already exists. "
-                f"Do you want to overwrite it? (y/n): "
-            )
-            if response.lower() != "y":
-                print("Operation aborted by the user.")
-                return
-        metadata_df.to_csv(args.output)
-        print("Metadata saved to {}".format(args.output))
-    else:
-        if not all([args.pmc_ids, args.output]):
-            parser.error("all parameters -pmc_ids, -o are required")
-        df_analysis = analyze_pdf(args.pmc_ids)
-        print("Result successfully obtained!")
-        if os.path.exists(args.output):
-            response = input(
-                f"The file '{args.output}' already exists. "
-                f"Do you want to overwrite it? (y/n): "
-            )
-            if response.lower() != "y":
-                print("Operation aborted by the user.")
-                return
-        df_analysis.to_csv(args.output)
-        print("Result saved to {}".format(args.output))
+    output_df = args.func(args)
+
+    if os.path.exists(args.output_file):
+        response = input(
+            f"The file '{args.output}' already exists. "
+            f"Do you want to overwrite it? (y/n): "
+        )
+        if response.lower() != "y":
+            print("Operation aborted by the user.")
+            return
+
+    output_df.to_csv(args.output_file)
+    print("Results saved to {}".format(args.output_file))
 
 
 if __name__ == "__main__":
