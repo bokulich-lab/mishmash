@@ -33,7 +33,7 @@ def main():
                            type=str,
                            required=True)
     md_parser.add_argument("--accession_list",
-                           n_args="+",
+                           nargs="+",
                            help="Space-separated list of INSDC accession IDs "
                                 "to retrieve metadata for.",
                            required=True)
