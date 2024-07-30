@@ -3,7 +3,6 @@ from .entrezpy_clients._efetch import EFetchAnalyzer
 import entrezpy.efetch.efetcher as ef
 
 log_level = "ERROR"
-nr_jobs = 1
 test_ids = ["ERROR"]
 
 
@@ -22,11 +21,19 @@ def get_metadata(args) -> object:
     """
     email = args.email
     accession_list = args.accession_list
+    n_jobs = args.n_jobs
 
-    run_ids = _get_run_ids(email, nr_jobs, accession_list, None, "", log_level)
+    assert n_jobs.isinstance(int)
+
+    if args.verbose:
+        log_level = "DEBUG"
+
+    run_ids = _get_run_ids(email, n_jobs, accession_list, None, "",
+                           log_level)
+
     efetcher = ef.Efetcher(
         "efetcher", email, apikey=None,
-        apikey_var=None, threads=nr_jobs, qid=None
+        apikey_var=None, threads=n_jobs, qid=None
     )
 
     metadata_response = efetcher.inquire(

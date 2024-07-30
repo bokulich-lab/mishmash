@@ -33,14 +33,23 @@ def main():
                            type=str,
                            required=True)
     md_parser.add_argument("--accession_list",
-                           nargs="+",
+                           n_args="+",
                            help="Space-separated list of INSDC accession IDs "
                                 "to retrieve metadata for.",
                            required=True)
+    md_parser.add_argument("--n_jobs",
+                           help="Number of jobs to run in parallel",
+                           default=1,
+                           required=False)
     md_parser.add_argument("--output_file",
                            help="File name for output.",
                            type=str,
-                           default="output.csv")
+                           default="output.csv",
+                           required=False)
+    md_parser.add_argument("--verbose",
+                           help="Prints process messages to standard output; "
+                                "use for debugging.",
+                           action="store_true")
 
     accession_parser = subparsers.add_parser("get_accessions",
                                              help="From published literature, "
@@ -62,7 +71,7 @@ def main():
 
     if os.path.exists(args.output_file):
         response = input(
-            f"The file '{args.output}' already exists. "
+            f"The file '{args.output_file}' already exists. "
             f"Do you want to overwrite it? (y/n): "
         )
         if response.lower() != "y":
