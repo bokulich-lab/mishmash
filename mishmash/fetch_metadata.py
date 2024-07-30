@@ -28,7 +28,7 @@ def get_metadata(args) -> object:
     if args.verbose:
         log_level = "DEBUG"
 
-    run_ids = _get_run_ids(email, n_jobs, accession_list, None, "",
+    run_ids = _get_run_ids(email, accession_list, None, "", n_jobs,
                            log_level)
 
     efetcher = ef.Efetcher(
