@@ -113,8 +113,12 @@ def _get_run_ids(
         run_ids_pipeline.add_fetch(
             efetch_params, analyzer=EFetchAnalyzer(log_level), dependency=el
         )
-
-    econduit.run(run_ids_pipeline)
+    try:
+        econduit.run(run_ids_pipeline)
+    except UnboundLocalError:
+        print("One or more of the following accession IDs is invalid! Please "
+              "double-check your input and try again.")
+        print(ids)
 
     # recover run IDs from all instances of EFetchAnalyzer
     all_run_ids = []

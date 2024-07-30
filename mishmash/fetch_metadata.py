@@ -23,7 +23,7 @@ def get_metadata(args) -> object:
     accession_list = args.accession_list
     n_jobs = args.n_jobs
 
-    assert n_jobs.isinstance(int)
+    assert isinstance(n_jobs, int)
 
     if args.verbose:
         log_level = "DEBUG"
