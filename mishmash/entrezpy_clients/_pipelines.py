@@ -119,6 +119,7 @@ def _get_run_ids(
         print("One or more of the following accession IDs is invalid! Please "
               "double-check your input and try again.")
         print(ids)
+        exit(1)
 
     # recover run IDs from all instances of EFetchAnalyzer
     all_run_ids = []
