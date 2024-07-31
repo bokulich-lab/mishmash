@@ -310,4 +310,4 @@ def analyze_pdf(args) -> dict:
         )
         df = pd.concat([df, tmp_df])
 
-    return df.set_index("id", drop=True)
+    return df.set_index("PMC ID", drop=True)
