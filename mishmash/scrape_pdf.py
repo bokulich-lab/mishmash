@@ -150,7 +150,7 @@ class PMCScraper:
         Set of accession numbers from the paper.
         """
         accession_set = set(t[0] for t in self.get_accession_tuples())
-        return ", ".join(list(accession_set))
+        return accession_set
 
     def get_database_names(self) -> list:
         """
@@ -182,6 +182,7 @@ class PMCScraper:
 
         if len(self.get_accession_numbers()) < 1:
             return 0
+
         else:
             if self.sra_record_xmls is None:
                 res_xmls = []
@@ -191,6 +192,7 @@ class PMCScraper:
                     res.raise_for_status()
                     res_xmls.append(xmltodict.parse(res.content))
                 self.sra_record_xmls = res_xmls
+
             total_count = 0
             for record in self.sra_record_xmls:
                 total_count += int(record["eSearchResult"]["Count"])
@@ -300,7 +302,8 @@ def analyze_pdf(args) -> dict:
         tmp_df = pd.DataFrame(
             {
                 "PMC ID": [el.pmc_id],
-                "INSDC Accession Numbers": [el.get_accession_numbers()],
+                "INSDC Accession Numbers":
+                    [", ".join(list(el.get_accession_numbers()))],
                 "INSDC Database": [el.get_database_names()],
                 "Number of Sequence Records": [el.get_number_of_records_sra()],
                 "Primer Sequences": [el.get_pcr_primers()],
