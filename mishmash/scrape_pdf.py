@@ -186,8 +186,7 @@ class PMCScraper:
             if self.sra_record_xmls is None:
                 res_xmls = []
                 for n in self.get_accession_numbers():
-                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/" \
-                          "eutils/esearch.fcgi?db=sra&term={}".format(n)
+                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&term={}".format(n)
                     res = requests.get(url)
                     res.raise_for_status()
                     res_xmls.append(xmltodict.parse(res.content))
@@ -293,7 +292,7 @@ def analyze_pdf(args) -> dict:
             "INSDC Accession Numbers": [],
             "INSDC Database": [],
             "Number of Sequence Records": [],
-            "Primers": [],
+            "Primer Sequences": [],
             "Sequencing Method": [],
         }
     )
