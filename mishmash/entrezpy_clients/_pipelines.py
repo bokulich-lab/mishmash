@@ -24,11 +24,11 @@ BATCH_SIZE = 500
 
 def _get_run_ids(
     email: str,
-    n_jobs: int,
     ids: Union[list, None],
     query: Union[str, None],
     source: str,
-    log_level: str,
+    n_jobs: int = 1,
+    log_level: str = "ERROR",
 ) -> list:
     """Pipeline to retrieve run IDs associated with BioSample query
     (provided in `query`) or other aggregate IDs like studies
@@ -113,8 +113,13 @@ def _get_run_ids(
         run_ids_pipeline.add_fetch(
             efetch_params, analyzer=EFetchAnalyzer(log_level), dependency=el
         )
-
-    econduit.run(run_ids_pipeline)
+    try:
+        econduit.run(run_ids_pipeline)
+    except UnboundLocalError:
+        print("One or more of the following accession IDs is invalid! Please "
+              "double-check your input and try again.")
+        print(ids)
+        exit(1)
 
     # recover run IDs from all instances of EFetchAnalyzer
     all_run_ids = []
