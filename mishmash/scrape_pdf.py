@@ -227,7 +227,7 @@ class PMCScraper:
         no_method_count = self.method_dict["no_method"]
         total_count = sum(self.method_dict.values())
         if no_method_count == total_count:
-            return {"NA": 1.0}
+            return None
 
         notnull_method_count = total_count - no_method_count
         weight_dict = {
@@ -352,6 +352,7 @@ def analyze_pdf(args) -> dict:
     df = pd.DataFrame(
         {
             "PMC ID": [],
+            "Sequence Accessibility Badge": [],
             "INSDC Accession Numbers": [],
             "INSDC Database": [],
             "Number of Sequence Records": [],
@@ -362,17 +363,54 @@ def analyze_pdf(args) -> dict:
         }
     )
     for el in scrape_objects:
+        pmc_id = el.pmc_id
+        insdc_id_list = list(el.get_accession_numbers())
+        insdc_db = el.get_database_names()
+        num_seqs = el.get_number_of_records_sra()
+        primer_seqs = el.get_pcr_primers()
+        method_prob = el.get_method_weights()
         code_dict = el.get_code_links()
+
+        # Evaluate badge qualifications
+        output_badge = "Cannot be determined automatically"
+        missing_steps = ""
+
+        if num_seqs > 0:  # Accession numbers found
+            output_badge = "Bronze"  # At minimum
+
+            if method_prob:
+                if (method_prob["amplicon"] > method_prob["shotgun"]) and not \
+                        primer_seqs:
+                    missing_steps += "Primer sequences could not be found! " \
+                                     "May require manual review."
+                else:
+                    output_badge = "Silver"
+
+                    if code_dict["url"]:
+                        output_badge = "Gold"
+                    else:
+                        missing_steps += "Link to code repository could not " \
+                                         "be found! May require manual " \
+                                         "review."
+
+        else:
+            missing_steps += "INSDC accession numbers with corresponding Run " \
+                             "IDs could not be found! May require manual " \
+                             "review."
+
+        if missing_steps:
+            output_badge = f"{output_badge}: {missing_steps}"
 
         tmp_df = pd.DataFrame(
             {
-                "PMC ID": [el.pmc_id],
+                "PMC ID": [pmc_id],
+                "Sequence Accessibility Badge": [output_badge],
                 "INSDC Accession Numbers":
-                    [", ".join(list(el.get_accession_numbers()))],
-                "INSDC Database": [el.get_database_names()],
-                "Number of Sequence Records": [el.get_number_of_records_sra()],
-                "Primer Sequences": [el.get_pcr_primers()],
-                "Sequencing Method Probability": [el.get_method_weights()],
+                    [", ".join(insdc_id_list)],
+                "INSDC Database": [insdc_db],
+                "Number of Sequence Records": [num_seqs],
+                "Primer Sequences": [primer_seqs],
+                "Sequencing Method Probability": [method_prob],
                 "Includes Code Repository": [code_dict["has_link"]],
                 "Code URL": [code_dict["url"]]
             }
