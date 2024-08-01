@@ -57,6 +57,7 @@ class PMCScraper:
         self.accession_tuples = None
         self.sra_records_count = None
         self.sra_record_xmls = None
+        self.method_dict = {}
 
     def get_xml(self) -> object:
         """
@@ -216,6 +217,28 @@ class PMCScraper:
             return "both_methods"
         return "no_method"
 
+    def get_method_weights(self):
+        self._parse_method()
+
+        if not self.method_dict:
+            pass
+
+        no_method_count = self.method_dict["no_method"]
+        total_count = sum(self.method_dict.values())
+        if no_method_count == total_count:
+            return {"NA": 1.0}
+
+        notnull_method_count = total_count - no_method_count
+        weight_dict = {
+            "amplicon": round((self.method_dict["amplicon_method"] +
+                               self.method_dict["both_methods"] / 2) /
+                              notnull_method_count, 2),
+            "shotgun": round((self.method_dict["metagenomics_method"] +
+                              self.method_dict["both_methods"] / 2) /
+                             notnull_method_count, 2)
+        }
+        return weight_dict
+
     def _count_methods(self, sentences):
         sents = Counter()
         for sentence in sentences:
@@ -223,7 +246,7 @@ class PMCScraper:
             sents[method] += 1
         return sents
 
-    def parse_method(self) -> dict:
+    def _parse_method(self) -> dict:
         """
         Get the size of each group method (prime_method, metagenomics, both,
         unknown).
@@ -238,6 +261,7 @@ class PMCScraper:
             for sentence in sent_tokenize(self.get_text())
         ]
         method_dict = dict(self._count_methods(sentences))
+        self.method_dict = method_dict
         return method_dict
 
     def get_pcr_primers(self) -> list:
@@ -307,7 +331,7 @@ def analyze_pdf(args) -> dict:
                 "INSDC Database": [el.get_database_names()],
                 "Number of Sequence Records": [el.get_number_of_records_sra()],
                 "Primer Sequences": [el.get_pcr_primers()],
-                "Sequencing Method": [el.parse_method()],
+                "Sequencing Method": [el.get_method_weights()],
             }
         )
         df = pd.concat([df, tmp_df])
