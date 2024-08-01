@@ -205,15 +205,14 @@ class PMCScraper:
     def _categorize_methods(words):
         amplicon_keywords = {"amplicon", "16s", "marker gene",
                              "marker-gene"}
-        metagenomic_keywords = {"metagenomic",
-                                "metagenomics", "shotgun"}
+        shotgun_keywords = {"metagenomic", "metagenomics", "shotgun"}
         pmwlen = len(amplicon_keywords.intersection(words))
-        mwlen = len(metagenomic_keywords.intersection(words))
+        mwlen = len(shotgun_keywords.intersection(words))
 
         if pmwlen > 0 and mwlen == 0:
             return "amplicon_method"
         elif pmwlen == 0 and mwlen > 0:
-            return "metagenomics_method"
+            return "shotgun_method"
         elif pmwlen > 0 and mwlen > 0:
             return "both_methods"
         return "no_method"
@@ -222,20 +221,30 @@ class PMCScraper:
         self._parse_article_text()
 
         if not self.method_dict:
-            pass
+            return None
 
-        no_method_count = self.method_dict["no_method"]
-        total_count = sum(self.method_dict.values())
+        method_list = ["amplicon_method", "shotgun_method", "both_methods",
+                       "no_method"]
+
+        method_dict = {
+            method: (self.method_dict[method] if method in
+                     self.method_dict.keys() else 0)
+            for method in method_list
+        }
+
+        no_method_count = method_dict["no_method"]
+        total_count = sum(method_dict.values())
         if no_method_count == total_count:
             return None
 
         notnull_method_count = total_count - no_method_count
+
         weight_dict = {
-            "amplicon": round((self.method_dict["amplicon_method"] +
-                               self.method_dict["both_methods"] / 2) /
+            "amplicon": round((method_dict["amplicon_method"] +
+                               method_dict["both_methods"] / 2) /
                               notnull_method_count, 2),
-            "shotgun": round((self.method_dict["metagenomics_method"] +
-                              self.method_dict["both_methods"] / 2) /
+            "shotgun": round((method_dict["shotgun_method"] +
+                              method_dict["both_methods"] / 2) /
                              notnull_method_count, 2)
         }
         return weight_dict
@@ -281,7 +290,7 @@ class PMCScraper:
 
     def get_code_links(self):
         url_list = re.findall(r"(https?://\S+)", str(self.get_text()))
-        url_list = list(set([url.rstrip(".") for url in url_list]))
+        url_list = list(set([url.rstrip(".)]") for url in url_list]))
         code_dict = {"url": None,
                      "has_link": "False"}
 
