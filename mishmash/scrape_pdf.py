@@ -2,11 +2,14 @@ import re
 import requests
 import sys
 import xmltodict
+
+import numpy as np
 import pandas as pd
 
 from bs4 import BeautifulSoup, Comment
 from collections import Counter
 from nltk import sent_tokenize, word_tokenize
+from urllib.parse import urlparse
 
 
 project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]+)"
@@ -17,8 +20,6 @@ experiments_pattern = r"((E|D|S)RX[0-9]{6,})"
 runs_pattern = r"((E|D|S)RR[0-9]{6,})"
 analysis_pattern = r"((E|D|S)RZ[0-9]{6,})"
 
-# primer_method = r"(16(S|s))"
-# metagenomic = r"((M|m)etagenomic)"
 patterns = [
     project_studies_pattern1,
     project_studies_pattern2,
@@ -218,7 +219,7 @@ class PMCScraper:
         return "no_method"
 
     def get_method_weights(self):
-        self._parse_method()
+        self._parse_article_text()
 
         if not self.method_dict:
             pass
@@ -246,10 +247,9 @@ class PMCScraper:
             sents[method] += 1
         return sents
 
-    def _parse_method(self) -> dict:
+    def _parse_article_text(self):
         """
-        Get the size of each group method (prime_method, metagenomics, both,
-        unknown).
+        Get the size of each group method.
 
         Returns 
         -------
@@ -262,7 +262,7 @@ class PMCScraper:
         ]
         method_dict = dict(self._count_methods(sentences))
         self.method_dict = method_dict
-        return method_dict
+        return
 
     def get_pcr_primers(self) -> list:
         """
@@ -278,6 +278,43 @@ class PMCScraper:
         if re.findall(pcr_pattern, str(self.get_text())):
             res += re.findall(pcr_pattern, self.get_text())
         return ", ".join(res)
+
+    def get_code_links(self):
+        url_list = re.findall(r"(https?://\S+)", str(self.get_text()))
+        url_list = list(set([url.rstrip(".") for url in url_list]))
+        code_dict = {"url": None,
+                     "has_link": "False"}
+
+        if url_list:
+            repo_host_list = ["github", "zenodo", "bitbucket", "figshare",
+                              "codeocean"]
+            token_list = [urlparse(url) for url in url_list]
+            is_repo_match = [any([repo in url.netloc for repo in
+                                  repo_host_list])
+                             for
+                             url in token_list]
+            if any(is_repo_match):
+                code_dict["url"] = np.array(url_list)[np.where(
+                    is_repo_match)[0]].tolist()
+                code_dict["has_link"] = "True"
+            else:
+                code_dict["has_link"] = "Possible: URL found in paper."
+
+        # If no URLs are found while scraping
+        else:
+            sentences = [
+                [word.lower() for word in word_tokenize(sentence)]
+                for sentence in sent_tokenize(self.get_text())
+            ]
+            repo_keywords = {"github", "zenodo", "bitbucket", "figshare",
+                             "code ocean", "codeocean" "repository"}
+            repo_match = [any(repo_keywords).intersection(words)
+                          for words in sentences]
+            if any(repo_match):
+                code_dict["has_link"] = "Possible: Repository keywords found " \
+                                        "in paper."
+
+        return code_dict
 
 
 def analyze_pdf(args) -> dict:
@@ -319,10 +356,14 @@ def analyze_pdf(args) -> dict:
             "INSDC Database": [],
             "Number of Sequence Records": [],
             "Primer Sequences": [],
-            "Sequencing Method": [],
+            "Sequencing Method Probability": [],
+            "Includes Code Repository": [],
+            "Code URL": []
         }
     )
     for el in scrape_objects:
+        code_dict = el.get_code_links()
+
         tmp_df = pd.DataFrame(
             {
                 "PMC ID": [el.pmc_id],
@@ -331,7 +372,9 @@ def analyze_pdf(args) -> dict:
                 "INSDC Database": [el.get_database_names()],
                 "Number of Sequence Records": [el.get_number_of_records_sra()],
                 "Primer Sequences": [el.get_pcr_primers()],
-                "Sequencing Method": [el.get_method_weights()],
+                "Sequencing Method Probability": [el.get_method_weights()],
+                "Includes Code Repository": [code_dict["has_link"]],
+                "Code URL": [code_dict["url"]]
             }
         )
         df = pd.concat([df, tmp_df])
