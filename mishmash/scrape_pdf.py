@@ -9,6 +9,7 @@ import pandas as pd
 from bs4 import BeautifulSoup, Comment
 from collections import Counter
 from nltk import sent_tokenize, word_tokenize
+from pathlib import Path
 from urllib.parse import urlparse
 
 
@@ -19,6 +20,7 @@ biosample_studies_pattern2 = r"((E|D|S)RS[0-9]{6,})"
 experiments_pattern = r"((E|D|S)RX[0-9]{6,})"
 runs_pattern = r"((E|D|S)RR[0-9]{6,})"
 analysis_pattern = r"((E|D|S)RZ[0-9]{6,})"
+old_sra_pattern = r"(SRA[0-9]{6,}(\.[0-9]+)?)"
 
 patterns = [
     project_studies_pattern1,
@@ -28,6 +30,7 @@ patterns = [
     experiments_pattern,
     runs_pattern,
     analysis_pattern,
+    old_sra_pattern
 ]
 
 
@@ -165,8 +168,9 @@ class PMCScraper:
         char_to_value = {"E": "EMBL-EBI European Nucleotide Archive",
                          "D": "NIG DNA Data Bank of Japan",
                          "S": "NCBI Sequence Read Archive",
-                         "N": "NCBI Sequence Read Archive"}
-        database_shortcuts = set(t[1] for t in self.get_accession_tuples())
+                         "N": "NCBI Sequence Read Archive",
+                         ".": "NCBI Sequence Read Archive"}
+        database_shortcuts = set(t[1][0] for t in self.get_accession_tuples())
         db_set = set(char_to_value[x] for x in database_shortcuts)
         return ", ".join(list(db_set))
 
@@ -317,13 +321,27 @@ class PMCScraper:
             ]
             repo_keywords = {"github", "zenodo", "bitbucket", "figshare",
                              "code ocean", "codeocean" "repository"}
-            repo_match = [any(repo_keywords).intersection(words)
+            repo_match = [any(repo_keywords.intersection(words))
                           for words in sentences]
             if any(repo_match):
                 code_dict["has_link"] = "Possible: Repository keywords found " \
                                         "in paper."
 
         return code_dict
+
+
+def _check_input_file(inp_file):
+    if Path(inp_file).is_file():
+        id_df = pd.read_csv(inp_file)
+        if id_df.shape[0] > 1:
+            return id_df[id_df.columns[0]].tolist()
+        else:
+            print(f"The provided file does not contain input IDs! Please check "
+                  f"and try again: {inp_file}")
+            exit(1)
+
+    print(f"The provided file path is not valid! Please check and try "
+          f"again: {inp_file}")
 
 
 def analyze_pdf(args) -> dict:
@@ -339,7 +357,15 @@ def analyze_pdf(args) -> dict:
     df: `pd.DataFrame` summarizing PMC objects.
 
     """
-    pmc_ids = args.pmc_list
+    if args.pmc_list:
+        pmc_ids = args.pmc_list
+    elif args.pmc_input_file:
+        pmc_ids = _check_input_file(args.pmc_input_file)
+    else:
+        print("Input PMC IDs must be provided via either the --pmc_list or "
+              "--pmc_input_file flag! Please check your command and try again.")
+        exit(1)
+
     requested_objects = [PMCScraper(id) for id in pmc_ids]
     scrape_objects = [
         x for x in filter(lambda el: not el.contains_blocking_comment(),

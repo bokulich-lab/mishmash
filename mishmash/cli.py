@@ -59,8 +59,13 @@ def main():
     accession_parser.add_argument("--pmc_list",
                                   nargs="+",
                                   help="Space-separated list of PubMed Central "
-                                       "IDs to evaluate for INSDC accessions.",
-                                  required=True)
+                                       "IDs to evaluate for INSDC accessions.")
+    accession_parser.add_argument("--pmc_input_file",
+                                  help="Path to input PubMed Central IDs to "
+                                       "evaluate for INSDC accessions. File "
+                                       "should be newline-delimited, "
+                                       "containing one ID per line.",
+                                  type=str)
     accession_parser.add_argument("--output_file",
                                   help="File name for output.",
                                   type=str,
