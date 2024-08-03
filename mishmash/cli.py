@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(required=True)
 
-    md_parser = subparsers.add_parser("get_metadata",
+    md_parser = subparsers.add_parser("assess_metadata",
                                       help="Retrieves metadata from INSDC "
                                            "database accession IDs.")
     md_parser.set_defaults(func=get_metadata)
@@ -51,7 +51,7 @@ def main():
                                 "use for debugging.",
                            action="store_true")
 
-    accession_parser = subparsers.add_parser("get_accessions",
+    accession_parser = subparsers.add_parser("assess_sequences",
                                              help="From published literature, "
                                                   "retrieves accession IDs "
                                                   "for INSDC datcdabases.")
