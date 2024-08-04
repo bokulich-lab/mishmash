@@ -134,7 +134,8 @@ class EFetchResult(EutilsResult):
         if bioproject:  # if not found, try elsewhere:
             if isinstance(bioproject, list):
                 bioproject_id = next(
-                    (x for x in bioproject if x["@namespace"].lower() == "bioproject")
+                    (x for x in bioproject
+                     if x["@namespace"].lower() == "bioproject")
                 ).get("#text")
             else:
                 bioproject_id = bioproject.get("#text")
@@ -162,7 +163,8 @@ class EFetchResult(EutilsResult):
             if isinstance(org, dict):
                 org = org.get("#text")
 
-            custom_meta = self._extract_custom_attributes(attributes["STUDY"], "study")
+            custom_meta = self._extract_custom_attributes(
+                attributes["STUDY"], "study")
 
             self.studies[study_id] = SRAStudy(
                 id=study_id,

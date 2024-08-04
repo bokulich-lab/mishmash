@@ -24,7 +24,7 @@ tqdm = "4.66.3"
 pypdf = "3.9.0"
 
 [tool.poetry.scripts]
-scrape = "mishmash.cli:main"
+mishmash = "mishmash.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

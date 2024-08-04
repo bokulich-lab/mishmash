@@ -95,7 +95,7 @@ class TestPMCScraper(unittest.TestCase):
         a = PMCScraper("id")
         with open(data) as f:
             a.core_text = f.read()
-        res = a.get_pcr_primer()
+        res = a.get_pcr_primers()
         self.assertEqual(res, expected_res)
 
     @parameterized.expand(
