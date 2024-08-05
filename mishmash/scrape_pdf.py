@@ -209,7 +209,8 @@ class PMCScraper:
     def _categorize_methods(words):
         amplicon_keywords = {"amplicon", "16s", "marker gene",
                              "marker-gene"}
-        shotgun_keywords = {"metagenomic", "metagenomics", "shotgun"}
+        shotgun_keywords = {"metagenomic", "metagenomics", "shotgun",
+                            "whole genome", "whole-genome", "genom*"}
         pmwlen = len(amplicon_keywords.intersection(words))
         mwlen = len(shotgun_keywords.intersection(words))
 
@@ -427,6 +428,11 @@ def analyze_pdf(args) -> dict:
                         missing_steps += "Link to code repository could not " \
                                          "be found! May require manual " \
                                          "review."
+
+            else:  # No methods to be found
+                missing_steps += "Text does not clearly denote whether an " \
+                                 "amplicon or shotgun sequencing paper! May " \
+                                 "require manual review."
 
         else:
             missing_steps += "INSDC accession numbers with corresponding Run " \

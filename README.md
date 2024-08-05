@@ -24,6 +24,8 @@ where:
 * `--pmc_list` is space-separated list of PubMed Central IDs to search for associated INSDC accession IDs e.g. the PMC ID **PMC6240460** for [the 2017 article by Naymagon et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6240460/)
 * `--output_file` specifies the output file to write the analysis to.
 
+An alternative to `--pmc_list` is the flag `--pmc_input_file`, which takes the full path to a file containing accession IDs. This should be a text file containing a single ID per line.
+
 ### Evaluate metadata reporting
 To retrieve metadata associated with a sequence record from an INSDC (e.g. SRA, DDBJ, ENA) database, run `assess_metadata`:
 
@@ -56,6 +58,36 @@ This module generates a comma-separated file with the following information:
 * Sequencing Method: Probability of sequencing method as either amplicon- or shotgun-based; output as a dictionary
 * Includes Code: True/False whether a code repository has been found for the paper
 * Code URL: Links to code repositories found in paper; output as a list of strings
+
+## Known Issues
+### "Invalid URL"
+
+Your local Internet connection may be unstable. If the following error arises, simply relaunch your command.
+
+```
+The download URL https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=PMC10913621 is likely invalid.
+
+Traceback (most recent call last):
+  File "/.venv/test_mm_3/bin/mishmash", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "mishmash/mishmash/cli.py", line 75, in main
+    output_df = args.func(args)
+                ^^^^^^^^^^^^^^^
+  File "mishmash/mishmash/scrape_pdf.py", line 370, in analyze_pdf
+    scrape_objects = [
+                     ^
+  File "mishmash/mishmash/scrape_pdf.py", line 371, in <lambda>
+    x for x in filter(lambda el: not el.contains_blocking_comment(),
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "mishmash/mishmash/scrape_pdf.py", line 96, in contains_blocking_comment
+    return _contains_blocking_comment(self.get_xml())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "mishmash/mishmash/scrape_pdf.py", line 38, in _contains_blocking_comment
+    for element in content(string=lambda text: isinstance(text, Comment)):
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'int' object is not callable
+```
 
 ## Contributions
 ### Pull requests
