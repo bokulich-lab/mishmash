@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 
 project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]+)"
 project_studies_pattern2 = r"((E|D|S)RP[0-9]{6,})"
-biosample_studies_pattern1 = r"(SAM(E|D|N)[A-Z]?[0-9])"
+biosample_studies_pattern1 = r"(SAM(E|D|N)[0-9]{8,})"
 biosample_studies_pattern2 = r"((E|D|S)RS[0-9]{6,})"
 experiments_pattern = r"((E|D|S)RX[0-9]{6,})"
 runs_pattern = r"((E|D|S)RR[0-9]{6,})"
