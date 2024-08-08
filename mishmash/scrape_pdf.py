@@ -76,19 +76,22 @@ class PMCScraper:
 
         url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch." \
               "fcgi?db=pmc&id={}".format(self.pmc_id)
-        try:
-            r = requests.get(url, 3)
-            r.raise_for_status()
-        except requests.exceptions.Timeout:
-            sys.exit(f"Connection to {url} has timed out. Please retry.")
-        except requests.exceptions.HTTPError:
-            print(
-                f"The download URL {url} is likely invalid.\n", flush=True,
-            )
-            return 0
-        except KeyError:
-            print("Key error for: " + url, flush=True)
-            return 0
+        for i in range(5):
+            try:
+                r = requests.get(url, 3)
+                r.raise_for_status()
+                break
+            except requests.exceptions.Timeout:
+                sys.exit(f"Connection to {url} has timed out. Please retry.")
+            except requests.exceptions.HTTPError:
+                print(
+                    f"The download URL {url} is likely invalid.\n", flush=True,
+                )
+                continue
+            except KeyError:
+                print("Key error for: " + url, flush=True)
+                return 0
+
         self.content = BeautifulSoup(r.content, features="xml")
         return self.content
 
