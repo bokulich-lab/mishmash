@@ -298,7 +298,7 @@ class PMCScraper:
 
     def get_code_links(self):
         url_list = re.findall(r"(https?://\S+)", str(self.get_text()))
-        url_list = list(set([url.rstrip(".)]") for url in url_list]))
+        url_list = list(set([url.rstrip(",.)]") for url in url_list]))
         code_dict = {"url": None,
                      "has_link": "False"}
 
