@@ -32,3 +32,10 @@ pytest = "^7.4.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.setuptools]
+packages = ["mishmash"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"mishmash" = ["*.json"]

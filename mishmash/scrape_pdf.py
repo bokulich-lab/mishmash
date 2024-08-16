@@ -1,3 +1,5 @@
+import importlib.resources
+import json
 import re
 import requests
 import sys
@@ -298,18 +300,28 @@ class PMCScraper:
 
     def get_code_links(self):
         url_list = re.findall(r"(https?://\S+)", str(self.get_text()))
-        url_list = list(set([url.rstrip(",.)]") for url in url_list]))
+        url_list = list(set([url.rstrip(",.;:)]") for url in url_list]))
         code_dict = {"url": None,
                      "has_link": "False"}
 
         if url_list:
+            # Remove URLs that match exclusion criteria i.e. common tools
+            with importlib.resources.open_text("mishmash", "urls.json") as file:
+                exclude_dict = json.load(file)
+
+            exclude_list = [ex_url.lower() for ex_url in exclude_dict[
+                "exclude"]]
+            not_in_excl = [url for url in url_list if not
+                           any([excl in url.lower() for excl in exclude_list])]
+
+            # Check whether any of these URLs match known repositories
             repo_host_list = ["github", "zenodo", "bitbucket", "figshare",
                               "codeocean"]
-            token_list = [urlparse(url) for url in url_list]
+            token_list = [urlparse(url) for url in not_in_excl]
             is_repo_match = [any([repo in url.netloc for repo in
-                                  repo_host_list])
-                             for
+                                  repo_host_list]) for
                              url in token_list]
+
             if any(is_repo_match):
                 code_dict["url"] = np.array(url_list)[np.where(
                     is_repo_match)[0]].tolist()
