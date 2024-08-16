@@ -1,0 +1,26 @@
+{
+  "exclude" :
+  [
+    "*.csv",
+    "benjjneb.github.io/dada2",
+    "bitbucket.org/biobakery/kneaddata",
+    "figshare.com/articles/figure",
+    "github.com/benjjneb/decontam",
+    "github.com/biobakery/humann",
+    "github.com/biobakery/MetaPhlAn",
+    "github.com/DerrickWood/kraken2",
+    "github.com/htseq/htseq",
+    "github.com/indraniel/fggrep",
+    "github.com/jdstorey/qvalue",
+    "github.com/lh3/minimap2",
+    "github.com/lh3/seqtk",
+    "github.com/OpenGene/fastp",
+    "github.com/picrust/picrust2",
+    "github.com/samtools/samtools",
+    "github.com/soedinglab/MMseqs2",
+    "github.com/statgen/bamUtil",
+    "github.com/StoreyLab/qvalue",
+    "github.com/torognes/vsearch",
+    "picrust.github.io/picrust"
+  ]
+}
