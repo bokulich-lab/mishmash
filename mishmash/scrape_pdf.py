@@ -23,6 +23,9 @@ experiments_pattern = r"((E|D|S)RX[0-9]{6,})"
 runs_pattern = r"((E|D|S)RR[0-9]{6,})"
 analysis_pattern = r"((E|D|S)RZ[0-9]{6,})"
 old_sra_pattern = r"(SRA[0-9]{6,}(\.[0-9]+)?)"
+old_ddbj_pattern = r"(DRA[0-9]{6,})"
+
+# DRA007592
 
 patterns = [
     project_studies_pattern1,
@@ -32,7 +35,8 @@ patterns = [
     experiments_pattern,
     runs_pattern,
     analysis_pattern,
-    old_sra_pattern
+    old_sra_pattern,
+    old_ddbj_pattern
 ]
 
 
@@ -213,9 +217,9 @@ class PMCScraper:
     @staticmethod
     def _categorize_methods(words):
         amplicon_keywords = {"amplicon", "16s", "marker gene",
-                             "marker-gene"}
+                             "marker-gene", "ITS", "ITS1", "ITS2"}
         shotgun_keywords = {"metagenomic", "metagenomics", "shotgun",
-                            "whole genome", "whole-genome", "genom*"}
+                            "whole genome", "whole-genome", "genom"}
         pmwlen = len(amplicon_keywords.intersection(words))
         mwlen = len(shotgun_keywords.intersection(words))
 
