@@ -22,10 +22,7 @@ biosample_studies_pattern2 = r"((E|D|S)RS[0-9]{6,})"
 experiments_pattern = r"((E|D|S)RX[0-9]{6,})"
 runs_pattern = r"((E|D|S)RR[0-9]{6,})"
 analysis_pattern = r"((E|D|S)RZ[0-9]{6,})"
-old_sra_pattern = r"(SRA[0-9]{6,}(\.[0-9]+)?)"
-old_ddbj_pattern = r"(DRA[0-9]{6,})"
-
-# DRA007592
+old_sra_pattern = r"((S|D)RA[0-9]{6,}(\.[0-9]+)?)"
 
 patterns = [
     project_studies_pattern1,
@@ -35,8 +32,7 @@ patterns = [
     experiments_pattern,
     runs_pattern,
     analysis_pattern,
-    old_sra_pattern,
-    old_ddbj_pattern
+    old_sra_pattern
 ]
 
 
@@ -166,7 +162,7 @@ class PMCScraper:
         accession_set = set(t[0] for t in self.get_accession_tuples())
         return accession_set
 
-    def get_database_names(self) -> list:
+    def get_database_names(self) -> str:
         """
         Get the database name from the associated accession IDs.
 
@@ -178,9 +174,10 @@ class PMCScraper:
                          "D": "NIG DNA Data Bank of Japan",
                          "S": "NCBI Sequence Read Archive",
                          "N": "NCBI Sequence Read Archive",
-                         ".": "NCBI Sequence Read Archive"}
+                         ".": "Unknown; old code."}
         database_shortcuts = set(t[1][0] for t in self.get_accession_tuples())
-        db_set = set(char_to_value[x] for x in database_shortcuts)
+        db_set = set(char_to_value[x] for x in database_shortcuts if x in
+                     char_to_value.keys())
         return ", ".join(list(db_set))
 
     def get_number_of_records_sra(self) -> int:
@@ -353,12 +350,17 @@ class PMCScraper:
 def _check_input_file(inp_file):
     if Path(inp_file).is_file():
         id_df = pd.read_csv(inp_file)
-        if id_df.shape[0] > 1:
+        id_df.dropna(axis=0, how="any",
+                     subset=id_df.columns[0],
+                     inplace=True,
+                     ignore_index=True)
+
+        if id_df.shape[0] > 0:
             return id_df[id_df.columns[0]].tolist()
-        else:
-            print(f"The provided file does not contain input IDs! Please check "
-                  f"and try again: {inp_file}")
-            exit(1)
+
+        print(f"The provided file does not contain input IDs! Please check "
+              f"and try again: {inp_file}")
+        exit(1)
 
     print(f"The provided file path is not valid! Please check and try "
           f"again: {inp_file}")
