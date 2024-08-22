@@ -65,6 +65,12 @@ class PMCScraper:
         self.sra_record_xmls = None
         self.method_dict = {}
 
+        # Properties of journal and corresponding author
+        self.journal_name = None
+        self.publisher_name = None
+        self.publish_year = None
+        self.institution_grid_id = None
+
     def get_xml(self) -> object:
         """
         Retrieve the XML record of the paper text.
@@ -118,6 +124,29 @@ class PMCScraper:
                 "the full text in XML form. Please reevaluate manually!"
             )
 
+        # Get journal properties
+        self.journal_name = content.find("journal-title").text
+        self.publisher_name = content.find("publisher-name").text
+
+        # Get publish date
+        pub_date_pmc = content.find_all("pub-date",
+                                        {"pub-type": re.compile(
+                                            "pmc-release")})
+        if len(pub_date_pmc) > 0:
+            self.publish_year = pub_date_pmc[0].year.text
+
+        # Get institutional affiliation of first corresponding author
+        cor_list = content.find_all("contrib", {"contrib-type": "author",
+                                                "corresp": "yes"})
+
+        try:
+            aff_tag = cor_list[0].find("xref", {"ref-type": "aff"})["rid"]
+            self.institution_grid_id = content.find("aff",
+                                                    {"id": aff_tag}).find(
+                "institution-id", {"institution-id-type": "GRID"}).text
+        except (IndexError, AttributeError):
+            pass
+
         core_text_body = content.find("body")
 
         core_text_back = content.find("back")
@@ -142,7 +171,13 @@ class PMCScraper:
         if self.accession_tuples is not None:
             return self.accession_tuples
 
-        core_text = self.get_text()
+        try:
+            core_text = self.get_text()
+        except AttributeError:
+            print("The input PMC ID does not exist! Please check your inputs "
+                  "and try again.")
+            exit(1)
+
         res = []
         for pattern in patterns:
             matches = re.findall(pattern, core_text)
@@ -199,9 +234,24 @@ class PMCScraper:
             if self.sra_record_xmls is None:
                 res_xmls = []
                 for n in self.get_accession_numbers():
-                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&term={}".format(n)
-                    res = requests.get(url)
-                    res.raise_for_status()
+                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/" \
+                          "esearch.fcgi?db=sra&term={}".format(n)
+
+                    for j in range(5):
+                        try:
+                            res = requests.get(url)
+                            res.raise_for_status()
+                            break
+                        except requests.exceptions.Timeout:
+                            sys.exit(
+                                f"Connection to {url} has timed out. "
+                                f"Please retry.")
+                        except requests.exceptions.HTTPError:
+                            print(
+                                f"The download URL {url} is likely invalid.\n",
+                                flush=True,
+                            )
+                            continue
                     res_xmls.append(xmltodict.parse(res.content))
                 self.sra_record_xmls = res_xmls
 
@@ -366,17 +416,13 @@ def _check_input_file(inp_file):
           f"again: {inp_file}")
 
 
-def analyze_pdf(args) -> dict:
+def analyze_pdf(args):
     """
     Gives overview of the paper with respect to the predefined metrics.
 
     Args
     ----
     args
-
-    Returns
-    -------
-    df: `pd.DataFrame` summarizing PMC objects.
 
     """
     if args.pmc_list:
@@ -399,7 +445,7 @@ def analyze_pdf(args) -> dict:
     ]
     if len(forbidden_objects) > 0:
         print(
-            "Papers represented by following PMC IDs were not fetched; "
+            "Papers represented by the following PMC IDs were not fetched; "
             "the publisher of this article does not allow "
             + "downloading of the full text in XML form:"
         )
@@ -419,6 +465,26 @@ def analyze_pdf(args) -> dict:
             "Code URL": []
         }
     )
+
+    if args.include_journal_data:
+        df = pd.DataFrame(
+            {
+                "PMC ID": [],
+                "Sequence Accessibility Badge": [],
+                "INSDC Accession Numbers": [],
+                "INSDC Database": [],
+                "Number of Sequence Records": [],
+                "Primer Sequences": [],
+                "Sequencing Method Probability": [],
+                "Includes Code Repository": [],
+                "Code URL": [],
+                "Publication Year": [],
+                "Journal Name": [],
+                "Publisher Name": [],
+                "Corresponding Author Affiliation": []
+            }
+        )
+
     for el in scrape_objects:
         pmc_id = el.pmc_id
         insdc_id_list = list(el.get_accession_numbers())
@@ -429,7 +495,7 @@ def analyze_pdf(args) -> dict:
         code_dict = el.get_code_links()
 
         # Evaluate badge qualifications
-        output_badge = "Cannot be determined automatically"
+        output_badge = "None"
         missing_steps = ""
 
         if num_seqs > 0:  # Accession numbers found
@@ -477,6 +543,27 @@ def analyze_pdf(args) -> dict:
                 "Code URL": [code_dict["url"]]
             }
         )
+
+        if args.include_journal_data:
+            tmp_df = pd.DataFrame(
+                {
+                    "PMC ID": [pmc_id],
+                    "Sequence Accessibility Badge": [output_badge],
+                    "INSDC Accession Numbers":
+                        [", ".join(insdc_id_list)],
+                    "INSDC Database": [insdc_db],
+                    "Number of Sequence Records": [num_seqs],
+                    "Primer Sequences": [primer_seqs],
+                    "Sequencing Method Probability": [method_prob],
+                    "Includes Code Repository": [code_dict["has_link"]],
+                    "Code URL": [code_dict["url"]],
+                    "Publication Year": [el.publish_year],
+                    "Journal Name": [el.journal_name],
+                    "Publisher Name": [el.publisher_name],
+                    "Corresponding Author Affiliation": [el.institution_grid_id]
+                }
+            )
+
         df = pd.concat([df, tmp_df])
 
     return df.set_index("PMC ID", drop=True)

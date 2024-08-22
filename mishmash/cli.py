@@ -71,6 +71,11 @@ def main():
                                   help="File name for output.",
                                   type=str,
                                   default="output.csv")
+    accession_parser.add_argument("--include_journal_data",
+                                  help="If included, outputs additional "
+                                       "columns with journal name and "
+                                       "institutional affiliation.",
+                                  action="store_true")
 
     args = parser.parse_args()
     output_df = args.func(args)
