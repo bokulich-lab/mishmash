@@ -169,7 +169,7 @@ class PMCScraper:
             inst_str = "".join([inst.text for inst in inst_list])
             inst_str = inst_str.rstrip(" ,.;:")
             self.institution = inst_str
-        except (IndexError, AttributeError):
+        except (IndexError, AttributeError, TypeError):
             pass
 
         core_text_body = content.find("body")
@@ -196,13 +196,7 @@ class PMCScraper:
         if self.accession_tuples:
             return self.accession_tuples
 
-        try:
-            core_text = self.get_text()
-        except AttributeError:
-            print("The input PMC ID does not exist! Please check your inputs "
-                  "and try again.")
-            return
-
+        core_text = self.get_text()
         res = []
         for pattern in patterns:
             matches = re.findall(pattern, core_text)
@@ -211,7 +205,7 @@ class PMCScraper:
             self.accession_tuples = res
         return self.accession_tuples
 
-    def get_accession_numbers(self) -> set:
+    def get_accession_numbers(self) -> list:
         """
         Retrieve accession numbers from the record.
 
@@ -219,9 +213,11 @@ class PMCScraper:
         -------
         Set of accession numbers from the paper.
         """
+
         retrieved_tuples = self.get_accession_tuples()
         if retrieved_tuples:
-            accession_set = set(t[0] for t in self.get_accession_tuples())
+            accession_set = list(set(t[0] for t in
+                                     self.get_accession_tuples()))
             return accession_set
 
         return None
@@ -239,10 +235,15 @@ class PMCScraper:
                          "S": "NCBI Sequence Read Archive",
                          "N": "NCBI Sequence Read Archive",
                          ".": "Unknown; old code."}
-        database_shortcuts = set(t[1][0] for t in self.get_accession_tuples())
-        db_set = set(char_to_value[x] for x in database_shortcuts if x in
-                     char_to_value.keys())
-        return ", ".join(list(db_set))
+
+        retrieved_tuples = self.get_accession_tuples()
+        if retrieved_tuples:
+            database_shortcuts = set(t[1][0] for t in retrieved_tuples)
+            db_set = set(char_to_value[x] for x in database_shortcuts if x in
+                         char_to_value.keys())
+            return ", ".join(list(db_set))
+
+        return None
 
     def get_number_of_records_sra(self) -> int:
         """
@@ -256,39 +257,43 @@ class PMCScraper:
         if self.sra_records_count:
             return self.sra_records_count
 
-        if len(self.get_accession_numbers()) < 1:
+        retrieved_accession_numbers = self.get_accession_numbers()
+        if not retrieved_accession_numbers:
             return 0
 
-        else:
-            if self.sra_record_xmls:
-                res_xmls = []
-                for n in self.get_accession_numbers():
-                    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/" \
-                          "esearch.fcgi?db=sra&term={}".format(n)
+        if len(retrieved_accession_numbers) < 1:
+            return 0
 
-                    for j in range(5):
-                        try:
-                            res = requests.get(url)
-                            res.raise_for_status()
-                            break
-                        except requests.exceptions.Timeout:
-                            sys.exit(
-                                f"Connection to {url} has timed out. "
-                                f"Please retry.")
-                        except requests.exceptions.HTTPError:
-                            print(
-                                f"The download URL {url} is likely invalid.\n",
-                                flush=True,
-                            )
-                            continue
-                    res_xmls.append(xmltodict.parse(res.content))
-                self.sra_record_xmls = res_xmls
+        # Record count has not yet been processed
+        res_xmls = []
+        for n in retrieved_accession_numbers:
+            url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/" \
+                  "esearch.fcgi?db=sra&term={}".format(n)
 
-            total_count = 0
-            for record in self.sra_record_xmls:
-                total_count += int(record["eSearchResult"]["Count"])
-            self.sra_records_count = total_count
-            return self.sra_records_count
+            for j in range(5):
+                try:
+                    res = requests.get(url)
+                    res.raise_for_status()
+                    break
+                except requests.exceptions.Timeout:
+                    sys.exit(
+                        f"Connection to {url} has timed out. "
+                        f"Please retry.")
+                except requests.exceptions.HTTPError:
+                    print(
+                        f"The download URL {url} is likely invalid.\n",
+                        flush=True,
+                    )
+                    continue
+            res_xmls.append(xmltodict.parse(res.content))
+
+        self.sra_record_xmls = res_xmls
+
+        total_count = 0
+        for record in self.sra_record_xmls:
+            total_count += int(record["eSearchResult"]["Count"])
+        self.sra_records_count = total_count
+        return self.sra_records_count
 
     @staticmethod
     def _categorize_methods(words):
@@ -374,6 +379,7 @@ class PMCScraper:
         """
         pcr_pattern = r"((?:A|G|C|T|N|W|V|M|H){9}(?:A|G|C|T|N|W|V|M|H)+)"
         res = []
+
         if re.findall(pcr_pattern, str(self.get_text())):
             res += re.findall(pcr_pattern, self.get_text())
         return ", ".join(res)
@@ -516,7 +522,16 @@ def analyze_pdf(args):
 
     for el in scrape_objects:
         pmc_id = el.pmc_id
-        insdc_id_list = list(el.get_accession_numbers())
+
+        try:
+            insdc_id_list = el.get_accession_numbers()
+            if insdc_id_list:
+                insdc_id_list = ", ".join(insdc_id_list)
+        except AttributeError:
+            print(f"The input PMC ID {pmc_id} does not exist! Please "
+                  f"check your inputs and try again.")
+            continue
+
         insdc_db = el.get_database_names()
         num_seqs = el.get_number_of_records_sra()
         primer_seqs = el.get_pcr_primers()
@@ -567,7 +582,7 @@ def analyze_pdf(args):
                 "PMC ID": [pmc_id],
                 "Sequence Accessibility Badge": [output_badge],
                 "INSDC Accession Numbers":
-                    [", ".join(insdc_id_list)],
+                    [insdc_id_list],
                 "INSDC Database": [insdc_db],
                 "Number of Sequence Records": [num_seqs],
                 "Primer Sequences": [primer_seqs],
@@ -583,7 +598,7 @@ def analyze_pdf(args):
                     "PMC ID": [pmc_id],
                     "Sequence Accessibility Badge": [output_badge],
                     "INSDC Accession Numbers":
-                        [", ".join(insdc_id_list)],
+                        [insdc_id_list],
                     "INSDC Database": [insdc_db],
                     "Number of Sequence Records": [num_seqs],
                     "Primer Sequences": [primer_seqs],
