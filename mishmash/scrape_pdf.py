@@ -69,7 +69,7 @@ class PMCScraper:
         self.journal_name = None
         self.publisher_name = None
         self.publish_year = None
-        self.institution_grid_id = None
+        self.institution = None
 
     def get_xml(self) -> object:
         """
@@ -79,7 +79,7 @@ class PMCScraper:
         -------
         self.content: xml
         """
-        if self.content is not None:
+        if self.content:
             return self.content
 
         url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch." \
@@ -106,6 +106,30 @@ class PMCScraper:
     def contains_blocking_comment(self):
         return _contains_blocking_comment(self.get_xml())
 
+    def get_journal_name(self):
+        if not self.journal_name:
+            self.get_text()
+
+        return self.journal_name
+
+    def get_publisher_name(self):
+        if not self.publisher_name:
+            self.get_text()
+
+        return self.publisher_name
+
+    def get_publish_year(self):
+        if not self.publish_year:
+            self.get_text()
+
+        return self.publish_year
+
+    def get_institution(self):
+        if not self.institution:
+            self.get_text()
+
+        return self.institution
+
     def get_text(self):
         """
         Retrieve the plain text of the record.
@@ -114,7 +138,7 @@ class PMCScraper:
         -------
         self.core_text: `str` Article text.
         """
-        if self.core_text is not None:
+        if self.core_text:
             return self.core_text
 
         content = self.get_xml()
@@ -136,14 +160,15 @@ class PMCScraper:
             self.publish_year = pub_date_pmc[0].year.text
 
         # Get institutional affiliation of first corresponding author
-        cor_list = content.find_all("contrib", {"contrib-type": "author",
-                                                "corresp": "yes"})
+        cor_list = content.find("contrib", {"contrib-type": "author"})
 
         try:
-            aff_tag = cor_list[0].find("xref", {"ref-type": "aff"})["rid"]
-            self.institution_grid_id = content.find("aff",
-                                                    {"id": aff_tag}).find(
-                "institution-id", {"institution-id-type": "GRID"}).text
+            aff_tag = cor_list.find("xref", {"ref-type": "aff"})["rid"]
+            inst_list = content.find("aff", {"id": aff_tag}).\
+                find_all("institution")
+            inst_str = "".join([inst.text for inst in inst_list])
+            inst_str = inst_str.rstrip(" ,.;:")
+            self.institution = inst_str
         except (IndexError, AttributeError):
             pass
 
@@ -168,7 +193,7 @@ class PMCScraper:
         self.accession_tuples: `list` List of tuples containing accession
         numbers and their associated database names.
         """
-        if self.accession_tuples is not None:
+        if self.accession_tuples:
             return self.accession_tuples
 
         try:
@@ -176,7 +201,7 @@ class PMCScraper:
         except AttributeError:
             print("The input PMC ID does not exist! Please check your inputs "
                   "and try again.")
-            exit(1)
+            return
 
         res = []
         for pattern in patterns:
@@ -194,8 +219,12 @@ class PMCScraper:
         -------
         Set of accession numbers from the paper.
         """
-        accession_set = set(t[0] for t in self.get_accession_tuples())
-        return accession_set
+        retrieved_tuples = self.get_accession_tuples()
+        if retrieved_tuples:
+            accession_set = set(t[0] for t in self.get_accession_tuples())
+            return accession_set
+
+        return None
 
     def get_database_names(self) -> str:
         """
@@ -224,14 +253,14 @@ class PMCScraper:
         -------
         self.sra_records_count: `int`
         """
-        if self.sra_records_count is not None:
+        if self.sra_records_count:
             return self.sra_records_count
 
         if len(self.get_accession_numbers()) < 1:
             return 0
 
         else:
-            if self.sra_record_xmls is None:
+            if self.sra_record_xmls:
                 res_xmls = []
                 for n in self.get_accession_numbers():
                     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/" \
@@ -481,7 +510,7 @@ def analyze_pdf(args):
                 "Publication Year": [],
                 "Journal Name": [],
                 "Publisher Name": [],
-                "Corresponding Author Affiliation": []
+                "First Author Affiliation": []
             }
         )
 
@@ -493,6 +522,10 @@ def analyze_pdf(args):
         primer_seqs = el.get_pcr_primers()
         method_prob = el.get_method_weights()
         code_dict = el.get_code_links()
+        publish_year = el.get_publish_year()
+        journal_name = el.get_journal_name()
+        publisher_name = el.get_publisher_name()
+        institution = el.get_institution()
 
         # Evaluate badge qualifications
         output_badge = "None"
@@ -557,10 +590,10 @@ def analyze_pdf(args):
                     "Sequencing Method Probability": [method_prob],
                     "Includes Code Repository": [code_dict["has_link"]],
                     "Code URL": [code_dict["url"]],
-                    "Publication Year": [el.publish_year],
-                    "Journal Name": [el.journal_name],
-                    "Publisher Name": [el.publisher_name],
-                    "Corresponding Author Affiliation": [el.institution_grid_id]
+                    "Publication Year": [publish_year],
+                    "Journal Name": [journal_name],
+                    "Publisher Name": [publisher_name],
+                    "First Author Affiliation": [institution]
                 }
             )
 
