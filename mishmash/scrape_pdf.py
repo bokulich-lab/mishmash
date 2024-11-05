@@ -153,11 +153,13 @@ class PMCScraper:
         self.publisher_name = content.find("publisher-name").text
 
         # Get publish date
-        pub_date_pmc = content.find_all("pub-date",
-                                        {"pub-type": re.compile(
-                                            "pmc-release")})
-        if len(pub_date_pmc) > 0:
-            self.publish_year = pub_date_pmc[0].year.text
+        pmc_year_tags = ["pmc-release", "epub", "accepted"]
+        for tag in pmc_year_tags:
+            pub_date_pmc = content.find_all("pub-date",
+                                            {"pub-type": re.compile(tag)})
+            if len(pub_date_pmc) > 0:
+                self.publish_year = pub_date_pmc[0].year.text
+                break
 
         # Get institutional affiliation of first corresponding author
         cor_list = content.find("contrib", {"contrib-type": "author"})

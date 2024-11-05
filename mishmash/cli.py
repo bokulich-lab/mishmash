@@ -35,8 +35,14 @@ def main():
     md_parser.add_argument("--accession_list",
                            nargs="+",
                            help="Space-separated list of INSDC accession IDs "
-                                "to retrieve metadata for.",
-                           required=True)
+                                "to retrieve metadata for.")
+    md_parser.add_argument("--accession_input_file",
+                           help="Path to input INSDC accession IDs to "
+                           "retrieve metadata for. File "
+                           "should be headerless and "
+                           "newline-delimited, "
+                           "containing one ID per line.",
+                           type=str)
     md_parser.add_argument("--n_jobs",
                            help="Number of jobs to run in parallel",
                            default=1,
@@ -46,10 +52,6 @@ def main():
                            type=str,
                            default="output.csv",
                            required=False)
-    md_parser.add_argument("--verbose",
-                           help="Prints process messages to standard output; "
-                                "use for debugging.",
-                           action="store_true")
 
     accession_parser = subparsers.add_parser("assess_sequences",
                                              help="From published literature, "
