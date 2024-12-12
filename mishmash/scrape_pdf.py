@@ -149,8 +149,15 @@ class PMCScraper:
             )
 
         # Get journal properties
-        self.journal_name = content.find("journal-title").text
-        self.publisher_name = content.find("publisher-name").text
+        try:
+            self.journal_name = content.find("journal-title").text
+        except AttributeError:
+            self.journal_name = None           
+ 
+        try:
+            self.publisher_name = content.find("publisher-name").text
+        except AttributeError:
+            self.publisher_name = None
 
         # Get publish date
         pmc_year_tags = ["pmc-release", "epub", "accepted"]
@@ -436,7 +443,7 @@ class PMCScraper:
 
 def _check_input_file(inp_file):
     if Path(inp_file).is_file():
-        id_df = pd.read_csv(inp_file)
+        id_df = pd.read_csv(inp_file, header=None)
         id_df.dropna(axis=0, how="any",
                      subset=id_df.columns[0],
                      inplace=True,
@@ -525,14 +532,9 @@ def analyze_pdf(args):
     for el in scrape_objects:
         pmc_id = el.pmc_id
 
-        try:
-            insdc_id_list = el.get_accession_numbers()
-            if insdc_id_list:
-                insdc_id_list = ", ".join(insdc_id_list)
-        except AttributeError:
-            print(f"The input PMC ID {pmc_id} does not exist! Please "
-                  f"check your inputs and try again.")
-            continue
+        insdc_id_list = el.get_accession_numbers()
+        if insdc_id_list:
+            insdc_id_list = ", ".join(insdc_id_list)
 
         insdc_db = el.get_database_names()
         num_seqs = el.get_number_of_records_sra()
