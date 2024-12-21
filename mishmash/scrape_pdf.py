@@ -226,10 +226,6 @@ class PMCScraper:
         core_text = self.get_text()
         tk_text = sent_tokenize(core_text)
 
-        # Allow for case differences
-        # Keywords can be surrounded by all characters except other letters?
-        ## i.e. spaces, parentheses, quotation marks permitted
-
         # Potential keywords, non-case sensitive
         db_name_list = ["figshare", "ega", "european phenome-genome archive",
                         "national genomics data center", "gsa",
@@ -240,12 +236,19 @@ class PMCScraper:
                         "metagenomics rast", "cnsa", "cngb sequence archive",
                         "cngbdb", "china national genebank database"]
         db_name_re = [fr'(\A|\W)({name})(\W|\Z)' for name in db_name_list]
+        db_match_list = [re.search(query, sent, re.IGNORECASE).group(2)
+                         for query
+                         in db_name_re for sent in tk_text
+                         if re.search(query, sent, re.IGNORECASE)]
 
         url_search_list = ["figshare.com", "ega-archive.org",
                            "ngdc.cncb.ac.cn/gsa", "mg-rast.org",
                            "metagenomics.anl.gov", "db.cngb.org/cnsa"]
         url_search_re = [fr'(\A|\W)({name})(\W|\Z)' for name in
                          url_search_list]
+        url_match_list = [re.search(query, sent, re.IGNORECASE).group(2)
+                          for query in url_search_re for sent in tk_text
+                          if re.search(query, sent, re.IGNORECASE)]
 
         prep_phrase_list = ["found in", "found at", "deposited in",
                             "deposited into", "deposited on",
@@ -253,6 +256,9 @@ class PMCScraper:
                             "available in", "available from", "available on"]
         prep_phrase_re = [fr'(\A|\W)({name})(\W|\Z)' for name in
                           prep_phrase_list]
+        prep_match_list = [re.search(query, sent, re.IGNORECASE).group(2)
+                           for query in prep_phrase_re for sent in tk_text
+                           if re.search(query, sent, re.IGNORECASE)]
 
         id_word_list = ["accession number", "accession number(s)",
                         "accession numbers",
@@ -261,8 +267,21 @@ class PMCScraper:
                         "ID numbers", r'CRA([0-9]{6})', r'CNP([0-9]{6})',
                         r'[0-9]{7}\.[0-9]', r'mgp[0-9]{5}']
         id_word_re = [fr'(\A|\W)({name})(\W|\Z)' for name in id_word_list]
+        id_match_list = [re.search(query, sent, re.IGNORECASE).group(2)
+                         for query in id_word_re for sent in tk_text
+                         if re.search(query, sent, re.IGNORECASE)]
 
-        pass
+        # match_dict = {"db"   : db_match_list,
+        #               "url"  : url_match_list,
+        #               "prep" : prep_match_list,
+        #               "id"   : id_match_list}
+
+        if len(db_match_list) > 0:
+            db_count = Counter(db_match_list)
+            db = max(db_count)
+
+        # Some if/else statements to determine whether to allow alternate DB
+        return None
 
     def get_accession_numbers(self) -> list:
         """
