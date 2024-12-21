@@ -15,7 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]+)"
+project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]{4,6})"
 project_studies_pattern2 = r"((E|D|S)RP[0-9]{6,})"
 biosample_studies_pattern1 = r"(SAM(E|D|N)[0-9]{8,})"
 biosample_studies_pattern2 = r"((E|D|S)RS[0-9]{6,})"
@@ -182,15 +182,19 @@ class PMCScraper:
             pass
 
         core_text_body = content.find("body")
-
         core_text_back = content.find("back")
+        core_text_front = content.find("front")
+
+        self.core_text = core_text_body.text
+
         if core_text_back:
             ref_list = core_text_back.find("ref-list")
             for codetag in ref_list.find_all_next():
                 codetag.clear()
-            self.core_text = core_text_body.text + core_text_back.text
-        else:
-            self.core_text = core_text_body.text
+            self.core_text += core_text_back.text
+        if core_text_front:
+            self.core_text += core_text_front.text
+
         return self.core_text
 
     def get_accession_tuples(self) -> list:
@@ -212,7 +216,53 @@ class PMCScraper:
             if matches:
                 res += matches
             self.accession_tuples = res
-        return self.accession_tuples
+
+        return list(set(self.accession_tuples))
+
+    def get_non_insdc_db(self):
+        # Checks text for keywords that may denote data upload in non-INSDC
+        # databases
+
+        core_text = self.get_text()
+        tk_text = sent_tokenize(core_text)
+
+        # Allow for case differences
+        # Keywords can be surrounded by all characters except other letters?
+        ## i.e. spaces, parentheses, quotation marks permitted
+
+        # Potential keywords, non-case sensitive
+        db_name_list = ["figshare", "ega", "european phenome-genome archive",
+                        "national genomics data center", "gsa",
+                        "genome sequence archive", "ngdc",
+                        "china national center for bioinformation",
+                        "cncb", "mg-rast", "metagenomic rapid annotations "
+                                           "using subsystems technology",
+                        "metagenomics rast", "cnsa", "cngb sequence archive",
+                        "cngbdb", "china national genebank database"]
+        db_name_re = [fr'(\A|\W)({name})(\W|\Z)' for name in db_name_list]
+
+        url_search_list = ["figshare.com", "ega-archive.org",
+                           "ngdc.cncb.ac.cn/gsa", "mg-rast.org",
+                           "metagenomics.anl.gov", "db.cngb.org/cnsa"]
+        url_search_re = [fr'(\A|\W)({name})(\W|\Z)' for name in
+                         url_search_list]
+
+        prep_phrase_list = ["found in", "found at", "deposited in",
+                            "deposited into", "deposited on",
+                            "accessible at",
+                            "available in", "available from", "available on"]
+        prep_phrase_re = [fr'(\A|\W)({name})(\W|\Z)' for name in
+                          prep_phrase_list]
+
+        id_word_list = ["accession number", "accession number(s)",
+                        "accession numbers",
+                        "accession ID", "project ID",
+                        "project access number",
+                        "ID numbers", r'CRA([0-9]{6})', r'CNP([0-9]{6})',
+                        r'[0-9]{7}\.[0-9]', r'mgp[0-9]{5}']
+        id_word_re = [fr'(\A|\W)({name})(\W|\Z)' for name in id_word_list]
+
+        pass
 
     def get_accession_numbers(self) -> list:
         """
@@ -577,6 +627,10 @@ def analyze_pdf(args):
             missing_steps += "INSDC accession numbers with corresponding Run " \
                              "IDs could not be found! May require manual " \
                              "review."
+
+            # No INSDC-based runs to be found
+            # Include steps to search for non-INSDC database-based text
+            # And send through workflow again?
 
         if missing_steps:
             output_badge = f"{output_badge}: {missing_steps}"
