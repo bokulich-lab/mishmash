@@ -271,17 +271,30 @@ class PMCScraper:
                          for query in id_word_re for sent in tk_text
                          if re.search(query, sent, re.IGNORECASE)]
 
-        # match_dict = {"db"   : db_match_list,
-        #               "url"  : url_match_list,
-        #               "prep" : prep_match_list,
-        #               "id"   : id_match_list}
+        # Assume dict insertion order as of Python 3.7+
+        match_dict = {"db"   : db_match_list,
+                      "url"  : url_match_list,
+                      "prep" : prep_match_list,
+                      "id"   : id_match_list}
 
-        if len(db_match_list) > 0:
-            db_count = Counter(db_match_list)
-            db = max(db_count)
+        match_len_df = pd.DataFrame(data=[[len(d) for d
+                                           in match_dict.values()]],
+                                    columns=list(match_dict.keys()),
+                                    index=[self.pmc_id])
 
-        # Some if/else statements to determine whether to allow alternate DB
-        return None
+        return match_len_df
+
+        # To get at least Bronze:
+        # >= 1 hit for DB, and # hits (URL + prep + ID) >= 1
+        # Possibly allow for the restrictive measure of
+        # Total hits (DB + URL + prep + ID) >= 5, none of which the negctrl pass
+
+        # if len(db_match_list) > 0:
+        #     db_count = Counter(db_match_list)
+        #     db = max(db_count)
+        #
+        # # Some if/else statements to determine whether to allow alternate DB
+        # return None
 
     def get_accession_numbers(self) -> list:
         """
