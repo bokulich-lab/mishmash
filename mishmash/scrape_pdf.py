@@ -219,7 +219,7 @@ class PMCScraper:
 
         return list(set(self.accession_tuples))
 
-    def get_non_insdc_db(self):
+    def check_non_insdc_db(self) -> str:
         # Checks text for keywords that may denote data upload in non-INSDC
         # databases
 
@@ -235,6 +235,32 @@ class PMCScraper:
                                            "using subsystems technology",
                         "metagenomics rast", "cnsa", "cngb sequence archive",
                         "cngbdb", "china national genebank database"]
+        db_name_dict = {"figshare": "Figshare",
+                        "ega": "European Phenome-Genome Archive",
+                        "european phenome-genome archive":
+                            "European Phenome-Genome Archive",
+                        "gsa": "China National Center for Bioinformation: "
+                               "Genome Sequence Archive",
+                        "genome sequence archive": "China National Center for "
+                                                   "Bioinformation: Genome "
+                                                   "Sequence Archive",
+                        "ngdc": "China National Center for Bioinformation: "
+                                "National Genomics Data Center",
+                        "china national center for bioinformation":
+                            "China National Center for Bioinformation",
+                        "cncb": "China National Center for Bioinformation:",
+                        "mg-rast": "MG-RAST",
+                        "metagenomic rapid annotations using subsystems "
+                            "technology": "MG-RAST",
+                        "metagenomics rast": "MG-RAST",
+                        "cnsa": "China National GeneBank Database Sequence "
+                                "Archive",
+                        "cngb sequence archive": "China National GeneBank "
+                                                 "Database Sequence Archive",
+                        "cngbdb": "China National GeneBank Database Sequence "
+                                  "Archive",
+                        "china national genebank database":
+                            "China National GeneBank Database Sequence Archive"}
         db_name_re = [fr'(\A|\W)({name})(\W|\Z)' for name in db_name_list]
         db_match_list = [re.search(query, sent, re.IGNORECASE).group(2)
                          for query
@@ -277,24 +303,27 @@ class PMCScraper:
                       "prep" : prep_match_list,
                       "id"   : id_match_list}
 
+        # For debugging purposes
         match_len_df = pd.DataFrame(data=[[len(d) for d
                                            in match_dict.values()]],
                                     columns=list(match_dict.keys()),
                                     index=[self.pmc_id])
 
-        return match_len_df
-
         # To get at least Bronze:
         # >= 1 hit for DB, and # hits (URL + prep + ID) >= 1
+        if len(db_match_list) > 0 and (len(url_match_list) + len(
+                prep_match_list) + len(id_match_list) > 0):
+            db_count = Counter(db_match_list)
+            db = db_name_dict[max(db_count).lower()]
+            return db
+
         # Possibly allow for the restrictive measure of
         # Total hits (DB + URL + prep + ID) >= 5, none of which the negctrl pass
+        sum_hits = sum([len(hit_list) for hit_list in match_dict.values()])
+        if sum_hits >= 5:
+            return "Other Database"
 
-        # if len(db_match_list) > 0:
-        #     db_count = Counter(db_match_list)
-        #     db = max(db_count)
-        #
-        # # Some if/else statements to determine whether to allow alternate DB
-        # return None
+        return None
 
     def get_accession_numbers(self) -> list:
         """
@@ -542,22 +571,30 @@ def _check_input_file(inp_file):
           f"again: {inp_file}")
 
 
-def analyze_pdf(args):
+def analyze_pdf(args,
+                pmc_ids: list = None):
     """
     Gives overview of the paper with respect to the predefined metrics.
 
     Args
     ----
     args
+    pmc_ids: :list:
 
     """
-    if args.pmc_list:
-        pmc_ids = args.pmc_list
-    elif args.pmc_input_file:
-        pmc_ids = _check_input_file(args.pmc_input_file)
-    else:
-        print("Input PMC IDs must be provided via either the --pmc_list or "
-              "--pmc_input_file flag! Please check your command and try again.")
+    if args:
+        if args.pmc_list:
+            pmc_ids = args.pmc_list
+        elif args.pmc_input_file:
+            pmc_ids = _check_input_file(args.pmc_input_file)
+        else:
+            print("Input PMC IDs must be provided via either the --pmc_list or "
+                  "--pmc_input_file flag! Please check your command "
+                  "and try again.")
+            exit(1)
+    if not pmc_ids:
+        print("No input PMC IDs have been detected! "
+              "Please check your command and try again.")
         exit(1)
 
     requested_objects = [PMCScraper(id) for id in pmc_ids]
@@ -592,7 +629,7 @@ def analyze_pdf(args):
         }
     )
 
-    if args.include_journal_data:
+    if args and args.include_journal_data:
         df = pd.DataFrame(
             {
                 "PMC ID": [],
@@ -618,7 +655,7 @@ def analyze_pdf(args):
         if insdc_id_list:
             insdc_id_list = ", ".join(insdc_id_list)
 
-        insdc_db = el.get_database_names()
+        seq_db = el.get_database_names()
         num_seqs = el.get_number_of_records_sra()
         primer_seqs = el.get_pcr_primers()
         method_prob = el.get_method_weights()
@@ -628,11 +665,17 @@ def analyze_pdf(args):
         publisher_name = el.get_publisher_name()
         institution = el.get_institution()
 
+        # Alternative check for non-INSDC database hit
+        if num_seqs == 0:
+            other_db = el.check_non_insdc_db()
+            seq_db = other_db
+
         # Evaluate badge qualifications
         output_badge = "None"
         missing_steps = ""
 
-        if num_seqs > 0:  # Accession numbers found
+        # Accession numbers found OR non-INSDC database hit
+        if (num_seqs > 0) or (other_db):
             output_badge = "Bronze"  # At minimum
 
             if method_prob:
@@ -660,10 +703,6 @@ def analyze_pdf(args):
                              "IDs could not be found! May require manual " \
                              "review."
 
-            # No INSDC-based runs to be found
-            # Include steps to search for non-INSDC database-based text
-            # And send through workflow again?
-
         if missing_steps:
             output_badge = f"{output_badge}: {missing_steps}"
 
@@ -673,7 +712,7 @@ def analyze_pdf(args):
                 "Sequence Accessibility Badge": [output_badge],
                 "INSDC Accession Numbers":
                     [insdc_id_list],
-                "INSDC Database": [insdc_db],
+                "Sequence Database": [seq_db],
                 "Number of Sequence Records": [num_seqs],
                 "Primer Sequences": [primer_seqs],
                 "Sequencing Method Probability": [method_prob],
@@ -682,14 +721,14 @@ def analyze_pdf(args):
             }
         )
 
-        if args.include_journal_data:
+        if args and args.include_journal_data:
             tmp_df = pd.DataFrame(
                 {
                     "PMC ID": [pmc_id],
                     "Sequence Accessibility Badge": [output_badge],
                     "INSDC Accession Numbers":
                         [insdc_id_list],
-                    "INSDC Database": [insdc_db],
+                    "Sequence Database": [seq_db],
                     "Number of Sequence Records": [num_seqs],
                     "Primer Sequences": [primer_seqs],
                     "Sequencing Method Probability": [method_prob],
