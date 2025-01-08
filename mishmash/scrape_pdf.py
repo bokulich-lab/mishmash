@@ -317,12 +317,6 @@ class PMCScraper:
             db = db_name_dict[max(db_count).lower()]
             return db
 
-        # Possibly allow for the restrictive measure of
-        # Total hits (DB + URL + prep + ID) >= 5, none of which the negctrl pass
-        sum_hits = sum([len(hit_list) for hit_list in match_dict.values()])
-        if sum_hits >= 5:
-            return "Other Database"
-
         return None
 
     def get_accession_numbers(self) -> list:
