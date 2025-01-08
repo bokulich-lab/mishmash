@@ -15,7 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]{4,6})"
+project_studies_pattern1 = r"(PRJ(E|D|N)[A-Z][0-9]{4,7})"
 project_studies_pattern2 = r"((E|D|S)RP[0-9]{6,})"
 biosample_studies_pattern1 = r"(SAM(E|D|N)[0-9]{8,})"
 biosample_studies_pattern2 = r"((E|D|S)RS[0-9]{6,})"
@@ -246,6 +246,9 @@ class PMCScraper:
                                                    "Sequence Archive",
                         "ngdc": "China National Center for Bioinformation: "
                                 "National Genomics Data Center",
+                        "national genomics data center":
+                            "China National Center for Bioinformation: "
+                            "National Genomics Data Cener",
                         "china national center for bioinformation":
                             "China National Center for Bioinformation",
                         "cncb": "China National Center for Bioinformation:",
