@@ -91,6 +91,10 @@ class PMCScraper:
                 break
             except requests.exceptions.Timeout:
                 sys.exit(f"Connection to {url} has timed out. Please retry.")
+                continue
+            except requests.exceptions.ChunkedEncodingError:
+                sys.exit(f"Connection to {url} has timed out. Please retry.")
+                continue
             except requests.exceptions.HTTPError:
                 print(
                     f"The download URL {url} is likely invalid.\n", flush=True,

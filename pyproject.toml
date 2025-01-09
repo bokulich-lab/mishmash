@@ -1,8 +1,7 @@
 [tool.poetry]
 name = "mishmash"
-version = "0.1.0"
-description = ""
-authors = ["Zuzana Sebechlebska <zuzanasebechlebska@gmail.com>"]
+version = "1.0.0"
+authors = ["ETH Food Systems Biotechnology <fsb_info@hest.ethz.ch>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
