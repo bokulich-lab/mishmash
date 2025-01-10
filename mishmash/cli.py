@@ -16,7 +16,6 @@ def install_nltk_punkt_dataset():
     except LookupError:
         nltk.download("punkt")
 
-
 def main():
     install_nltk_punkt_dataset()
 
@@ -96,4 +95,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print("Module is being imported.")
     main()

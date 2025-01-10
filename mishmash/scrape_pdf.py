@@ -91,9 +91,8 @@ class PMCScraper:
                 break
             except requests.exceptions.Timeout:
                 sys.exit(f"Connection to {url} has timed out. Please retry.")
-                continue
             except requests.exceptions.ChunkedEncodingError:
-                sys.exit(f"Connection to {url} has timed out. Please retry.")
+                print(f"Connection to {url} has timed out. Please retry.")
                 continue
             except requests.exceptions.HTTPError:
                 print(
@@ -188,9 +187,10 @@ class PMCScraper:
         core_text_body = content.find("body")
         core_text_back = content.find("back")
         core_text_front = content.find("front")
+        self.core_text = ""
 
-        self.core_text = core_text_body.text
-
+        if core_text_body:
+            self.core_text = core_text_body.text
         if core_text_back:
             ref_list = core_text_back.find("ref-list")
             for codetag in ref_list.find_all_next():
@@ -198,6 +198,9 @@ class PMCScraper:
             self.core_text += core_text_back.text
         if core_text_front:
             self.core_text += core_text_front.text
+
+        if self.core_text == "":
+            raise NoJournalTextError(f"No text found for {self.pmc_id}!")
 
         return self.core_text
 
@@ -588,6 +591,7 @@ def analyze_pdf(args,
             pmc_ids = args.pmc_list
         elif args.pmc_input_file:
             pmc_ids = _check_input_file(args.pmc_input_file)
+            print("Input file has been found! Loading PMC IDs...")
         else:
             print("Input PMC IDs must be provided via either the --pmc_list or "
                   "--pmc_input_file flag! Please check your command "
@@ -656,7 +660,11 @@ def analyze_pdf(args,
         if insdc_id_list:
             insdc_id_list = ", ".join(insdc_id_list)
 
-        seq_db = el.get_database_names()
+        try:
+            seq_db = el.get_database_names()
+        except NoJournalTextError:
+            continue
+
         num_seqs = el.get_number_of_records_sra()
         primer_seqs = el.get_pcr_primers()
         method_prob = el.get_method_weights()
@@ -745,3 +753,11 @@ def analyze_pdf(args,
         df = pd.concat([df, tmp_df])
 
     return df.set_index("PMC ID", drop=True)
+
+
+class NoJournalTextError(AttributeError):
+    """
+    Raise in the case that core text is not found
+    """
+    def __init__(self, message):
+        pass
