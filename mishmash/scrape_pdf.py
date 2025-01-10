@@ -193,8 +193,12 @@ class PMCScraper:
             self.core_text = core_text_body.text
         if core_text_back:
             ref_list = core_text_back.find("ref-list")
-            for codetag in ref_list.find_all_next():
-                codetag.clear()
+            try:
+                for codetag in ref_list.find_all_next():
+                    codetag.clear()
+            except AttributeError:
+                print(f"No next elements found for ref-list tag in "
+                      "{self.pmc_id}.")
             self.core_text += core_text_back.text
         if core_text_front:
             self.core_text += core_text_front.text
@@ -527,20 +531,28 @@ class PMCScraper:
             # Check whether any of these URLs match known repositories
             repo_host_list = ["github", "zenodo", "bitbucket", "figshare",
                               "codeocean"]
-            token_list = [urlparse(url) for url in not_in_excl]
-            is_repo_match = [any([repo in url.netloc for repo in
-                                  repo_host_list]) for
-                             url in token_list]
+            token_list = []
+            for url in not_in_excl:
+                try:
+                    parsed = urlparse(url)
+                    token_list.append(parsed)
+                except ValueError:
+                    continue
 
-            if any(is_repo_match):
-                code_dict["url"] = np.array(url_list)[np.where(
-                    is_repo_match)[0]].tolist()
-                code_dict["has_link"] = "True"
-            else:
-                code_dict["has_link"] = "Possible: URL found in paper."
+            if len(token_list) > 0:
+                is_repo_match = [any([repo in url.netloc for repo in
+                                      repo_host_list]) for
+                                 url in token_list]
+
+                if any(is_repo_match):
+                    code_dict["url"] = np.array(url_list)[np.where(
+                        is_repo_match)[0]].tolist()
+                    code_dict["has_link"] = "True"
+                else:
+                    code_dict["has_link"] = "Possible: URL found in paper."
 
         # If no URLs are found while scraping
-        else:
+        if not url_list or len(token_list) == 0:
             sentences = [
                 [word.lower() for word in word_tokenize(sentence)]
                 for sentence in sent_tokenize(self.get_text())
