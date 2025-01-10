@@ -12,9 +12,10 @@ from .scrape_pdf import analyze_pdf
 
 def install_nltk_punkt_dataset():
     try:
-        nltk.data.find("tokenizers/punkt")
+        nltk.data.find("tokenizers/punkt_tab")
     except LookupError:
-        nltk.download("punkt")
+        nltk.download("punkt_tab")
+
 
 def main():
     install_nltk_punkt_dataset()
