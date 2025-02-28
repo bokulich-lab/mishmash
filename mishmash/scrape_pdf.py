@@ -259,7 +259,7 @@ class PMCScraper:
                                 "National Genomics Data Center",
                         "national genomics data center":
                             "China National Center for Bioinformation: "
-                            "National Genomics Data Cener",
+                            "National Genomics Data Center",
                         "china national center for bioinformation":
                             "China National Center for Bioinformation",
                         "cncb": "China National Center for Bioinformation:",
