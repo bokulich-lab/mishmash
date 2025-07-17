@@ -24,7 +24,7 @@ where:
 * `--pmc_list` is space-separated list of PubMed Central IDs to search for associated INSDC accession IDs e.g. the PMC ID **PMC6240460** for [the 2017 article by Naymagon et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6240460/)
 * `--output_file` specifies the output file to write the analysis to.
 
-An alternative to `--pmc_list` is the flag `--pmc_input_file`, which takes the full path to a file containing accession IDs. This should be a text file containing a single ID per line.
+An alternative to `--pmc_list` is the flag `--pmc_input_file`, which takes the full path to a file containing PMC IDs. This should be a text file containing a single ID per line.
 
 ### Evaluate metadata reporting
 To retrieve metadata associated with a sequence record from an INSDC (e.g. SRA, DDBJ, ENA) database, run `assess_metadata`:
@@ -37,8 +37,10 @@ mishmash assess_metadata \
 ```
 where:
 * `--email` is your email address (required by NCBI).
-* `--accession_ids` is a space-separated list of accession IDs to retrieve metadata for. These can be BioProject, BioSample, BioExperiment, or likewise accession IDs that are used within INSDC interfaces e.g. the BioProject ID **PRJNA607574** for the [collection of samples uploaded by the Memorial Sloan Kettering Cancer Center.](https://www.ncbi.nlm.nih.gov/bioproject/?term=(PRJNA607574)%20AND%20bioproject_sra[filter]%20NOT%20bioproject_gap[filter])
+* `--accession_list` is a space-separated list of accession IDs to retrieve metadata for. These can be BioProject, BioSample, BioExperiment, or likewise accession IDs that are used within INSDC interfaces e.g. the BioProject ID **PRJNA607574** for the [collection of samples uploaded by the Memorial Sloan Kettering Cancer Center.](https://www.ncbi.nlm.nih.gov/bioproject/?term=(PRJNA607574)%20AND%20bioproject_sra[filter]%20NOT%20bioproject_gap[filter])
 * `--output_file` specifies the output file to write the retrieved metadata to.
+
+An alternative to `--accession_list` is the flag `--accession_input_file`, which takes the full path to a file containing accession IDs. This should be a text file containing a single ID per line.
 
 Optional parameters to `assess_metadata` include:
 * `--n_jobs`: an integer value for number of threads in parallelization
